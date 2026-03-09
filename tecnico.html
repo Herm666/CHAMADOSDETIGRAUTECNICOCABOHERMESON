@@ -619,7 +619,7 @@ body {
 <div class="sidebar">
   <div class="sidebar-section">
     <div class="sidebar-section-label">Visão Geral</div>
-    <div class="nav-item active" onclick="showView('dashboard', this)">
+    <div class="nav-item active" id="nav-dashboard" onclick="showView('dashboard', this)">
       <span class="nav-icon">📊</span> Dashboard
     </div>
   </div>
@@ -655,10 +655,12 @@ body {
   </div>
 
   <div class="sidebar-tecnico-box">
-    <div class="sidebar-tecnico-label">Equipe Online</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> Emanoel Estagiário</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> Ghabriel Estagiário</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> HermesonTI</div>
+    <div class="sidebar-tecnico-label">Sessão Ativa</div>
+    <div class="tecnico-item"><span class="tecnico-dot"></span> <span id="sidebar-user-nome">—</span></div>
+    <div style="font-size:0.7rem;color:#666;padding:2px 0 8px 14px" id="sidebar-user-role"></div>
+    <button id="btn-logout" onclick="logout()" style="display:none;width:100%;background:#da1e28;color:white;border:none;padding:8px;font-family:inherit;font-size:0.75rem;font-weight:600;cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;">
+      🚪 Sair
+    </button>
   </div>
 </div>
 
@@ -887,49 +889,92 @@ body {
 <div class="toast" id="toast"></div>
 
 <script>
+const API = 'http://localhost:5000/api';
+
+// ── Sessão ────────────────────────────────────────────────────
+let token   = sessionStorage.getItem('ti-token');
+let tiNome  = sessionStorage.getItem('ti-nome')  || '';
+let tiRole  = sessionStorage.getItem('ti-role')  || '';
+
+// Guard: redireciona para login se não autenticado
+if (!token) { window.location.href = 'login.html'; }
+
 let tickets = [];
-let currentFilter = null; // for sidebar
-let currentStatusFilter = ''; // for nav items
+let currentFilter = null;
+let currentStatusFilter = '';
 let ticketsDisplayMode = 'table';
 let editingId = null;
 
-function load() {
-  tickets = JSON.parse(localStorage.getItem('ti-tickets') || '[]');
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${token}`
+});
+
+// ── Carregar dados ────────────────────────────────────────────
+async function load() {
+  try {
+    const resp = await fetch(`${API}/chamados`, { headers: authHeaders() });
+    if (resp.status === 401) { logout(); return; }
+    if (!resp.ok) throw new Error();
+    tickets = await resp.json();
+  } catch(e) {
+    tickets = [];
+    console.error('[API] load:', e);
+  }
 }
 
-function save() {
-  localStorage.setItem('ti-tickets', JSON.stringify(tickets));
+async function save() { /* substituído por apiUpdate */ }
+
+async function apiUpdate(id, fields) {
+  try {
+    const resp = await fetch(`${API}/chamados/${id}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify(fields)
+    });
+    if (resp.status === 401) { logout(); return null; }
+    if (resp.status === 403) {
+      const d = await resp.json();
+      showToast('⛔ ' + d.error, 'red'); return null;
+    }
+    if (!resp.ok) throw new Error();
+    return await resp.json();
+  } catch(e) { console.error('[API] update:', e); return null; }
 }
 
+function logout() {
+  fetch(`${API}/auth/logout`, { method:'POST', headers: authHeaders() }).catch(()=>{});
+  sessionStorage.clear();
+  window.location.href = 'login.html';
+}
+
+// ── Badges sidebar ────────────────────────────────────────────
 function updateBadges() {
-  const abertos = tickets.filter(t => t.status === 'Aberto').length;
+  const abertos   = tickets.filter(t => t.status === 'Aberto').length;
   const andamento = tickets.filter(t => t.status === 'Em Atendimento').length;
-  document.getElementById('badge-todos').textContent = tickets.length;
-  document.getElementById('badge-abertos').textContent = abertos;
-  document.getElementById('badge-andamento').textContent = andamento;
+  document.getElementById('badge-todos').textContent    = tickets.length;
+  document.getElementById('badge-abertos').textContent  = abertos;
+  document.getElementById('badge-andamento').textContent= andamento;
 }
 
-// === VIEWS ===
+// ── Views ─────────────────────────────────────────────────────
 function showView(view, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
-
   document.getElementById('view-dashboard').style.display = 'none';
-  document.getElementById('view-tickets').style.display = 'none';
-
+  document.getElementById('view-tickets').style.display   = 'none';
   currentFilter = null;
   currentStatusFilter = '';
-
   if (view === 'dashboard') {
     document.getElementById('view-dashboard').style.display = 'block';
     document.getElementById('topbar-page-name').textContent = 'Dashboard';
     renderDashboard();
   } else {
     document.getElementById('view-tickets').style.display = 'block';
-    const labels = { todos: 'Todos os Chamados', abertos: 'Chamados Abertos', andamento: 'Em Atendimento', concluidos: 'Chamados Concluídos' };
-    const statusMap = { abertos: 'Aberto', andamento: 'Em Atendimento', concluidos: 'Concluído', todos: '' };
-    document.getElementById('tickets-view-title').textContent = labels[view] || 'Chamados';
-    document.getElementById('topbar-page-name').textContent = labels[view] || 'Chamados';
+    const labels    = { todos:'Todos os Chamados', abertos:'Chamados Abertos', andamento:'Em Atendimento', concluidos:'Chamados Concluídos' };
+    const statusMap = { abertos:'Aberto', andamento:'Em Atendimento', concluidos:'Concluído', todos:'' };
+    document.getElementById('tickets-view-title').textContent   = labels[view] || 'Chamados';
+    document.getElementById('topbar-page-name').textContent     = labels[view] || 'Chamados';
     currentStatusFilter = statusMap[view] || '';
     document.getElementById('f-status').value = currentStatusFilter;
     document.getElementById('tickets-view-sub').textContent = '';
@@ -940,15 +985,14 @@ function showView(view, el) {
 function filterTecnico(name, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
-
   document.getElementById('view-dashboard').style.display = 'none';
-  document.getElementById('view-tickets').style.display = 'block';
-  document.getElementById('topbar-page-name').textContent = name;
+  document.getElementById('view-tickets').style.display   = 'block';
+  document.getElementById('topbar-page-name').textContent   = name;
   document.getElementById('tickets-view-title').textContent = name;
-  document.getElementById('tickets-view-sub').textContent = 'Chamados atribuídos';
+  document.getElementById('tickets-view-sub').textContent   = 'Chamados atribuídos';
   currentStatusFilter = '';
-  document.getElementById('f-status').value = '';
-  document.getElementById('f-tecnico').value = name;
+  document.getElementById('f-status').value   = '';
+  document.getElementById('f-tecnico').value  = name;
   renderTicketsView();
 }
 
@@ -956,31 +1000,30 @@ function setTicketsView(mode, btn) {
   ticketsDisplayMode = mode;
   document.querySelectorAll('.vt-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('table-view').style.display = mode === 'table' ? 'block' : 'none';
+  document.getElementById('table-view').style.display  = mode === 'table'  ? 'block' : 'none';
   document.getElementById('kanban-view').style.display = mode === 'kanban' ? 'block' : 'none';
   renderTicketsView();
 }
 
 function clearFilters() {
   document.getElementById('search-input').value = '';
-  document.getElementById('f-status').value = currentStatusFilter;
-  document.getElementById('f-setor').value = '';
-  document.getElementById('f-prio').value = '';
+  document.getElementById('f-status').value  = currentStatusFilter;
+  document.getElementById('f-setor').value   = '';
+  document.getElementById('f-prio').value    = '';
   document.getElementById('f-tecnico').value = '';
   renderTicketsView();
 }
 
 function getFiltered() {
-  const search = (document.getElementById('search-input').value || '').toLowerCase();
-  const fStatus = document.getElementById('f-status').value;
-  const fSetor = document.getElementById('f-setor').value;
-  const fPrio = document.getElementById('f-prio').value;
+  const search   = (document.getElementById('search-input').value || '').toLowerCase();
+  const fStatus  = document.getElementById('f-status').value;
+  const fSetor   = document.getElementById('f-setor').value;
+  const fPrio    = document.getElementById('f-prio').value;
   const fTecnico = document.getElementById('f-tecnico').value;
-
   return tickets.filter(t => {
     if (fStatus && t.status !== fStatus) return false;
-    if (fSetor && t.setor !== fSetor) return false;
-    if (fPrio && t.prioridade !== fPrio) return false;
+    if (fSetor  && t.setor  !== fSetor)  return false;
+    if (fPrio   && t.prioridade !== fPrio) return false;
     if (fTecnico === '__sem__' && t.tecnico) return false;
     if (fTecnico && fTecnico !== '__sem__' && t.tecnico !== fTecnico) return false;
     if (search && !t.assunto.toLowerCase().includes(search) && !t.nome.toLowerCase().includes(search)) return false;
@@ -996,56 +1039,66 @@ function renderTicketsView() {
 }
 
 function statusClass(s) {
-  if (s === 'Aberto') return 'badge-aberto';
-  if (s === 'Em Atendimento') return 'badge-atendimento';
+  if (s==='Aberto') return 'badge-aberto';
+  if (s==='Em Atendimento') return 'badge-atendimento';
   return 'badge-concluido';
 }
 function prioClass(p) {
-  if (p === 'Alta') return 'badge-alta';
-  if (p === 'Média') return 'badge-media';
+  if (p==='Alta') return 'badge-alta';
+  if (p==='Média') return 'badge-media';
   return 'badge-baixa';
 }
 
+// ── Tabela ────────────────────────────────────────────────────
 function renderTable(filtered) {
   const tbody = document.getElementById('tickets-table-body');
   if (!filtered.length) {
     tbody.innerHTML = `<tr class="empty-row"><td colspan="9"><div class="empty-icon">📭</div><div>Nenhum chamado encontrado</div></td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map(t => `
-    <tr>
+
+  // Técnico normal: só pode pegar chamados sem dono ou que são seus
+  const podeAtribuir = (t) => tiRole === 'gestor' || !t.tecnico || t.tecnico === tiNome;
+
+  tbody.innerHTML = filtered.map(t => {
+    // Opções do select de técnico
+    const tecnicos = ['Emanoel Estagiário','Ghabriel Estagiário','HermesonTI'];
+    const selectOpts = tiRole === 'gestor'
+      ? `<option value="">Sem técnico</option>` + tecnicos.map(n => `<option ${t.tecnico===n?'selected':''}>${n}</option>`).join('')
+      : podeAtribuir(t)
+        ? `<option value="">Sem técnico</option>` + tecnicos.map(n => `<option ${t.tecnico===n?'selected':''}>${n}</option>`).join('')
+        : `<option>${t.tecnico || 'Sem técnico'}</option>`;
+
+    const selectDisabled = !podeAtribuir(t) ? 'disabled' : '';
+
+    return `<tr>
       <td><span class="tid">#${String(t.id).padStart(4,'0')}</span></td>
-      <td class="t-assunto">${t.assunto}<small>${t.descricao ? t.descricao.substring(0,60) + (t.descricao.length>60?'…':'') : '—'}</small></td>
+      <td class="t-assunto">${t.assunto}<small>${t.descricao?t.descricao.substring(0,60)+(t.descricao.length>60?'…':''):'—'}</small></td>
       <td class="t-nome">${t.nome}</td>
       <td><span class="t-setor">${t.setor}</span></td>
       <td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td>
       <td><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
       <td>
-        <select class="table-select" onchange="quickAtribuir(${t.id}, this.value)" style="min-width:140px">
-          <option value="">Sem técnico</option>
-          <option ${t.tecnico==='Emanoel Estagiário'?'selected':''}>Emanoel Estagiário</option>
-          <option ${t.tecnico==='Ghabriel Estagiário'?'selected':''}>Ghabriel Estagiário</option>
-          <option ${t.tecnico==='HermesonTI'?'selected':''}>HermesonTI</option>
+        <select class="table-select" onchange="quickAtribuir(${t.id}, this.value)" style="min-width:140px" ${selectDisabled}>
+          ${selectOpts}
         </select>
       </td>
       <td style="font-size:0.75rem;color:var(--gray-50);white-space:nowrap">${t.data}</td>
       <td><button onclick="openModal(${t.id})" style="background:transparent;border:1px solid var(--gray-20);padding:5px 10px;cursor:pointer;font-size:0.75rem;font-family:inherit;color:var(--blue);transition:all 0.15s" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background='transparent'">Detalhes</button></td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
+// ── Kanban ────────────────────────────────────────────────────
 function renderKanban(filtered) {
-  const cols = { 'Aberto': [], 'Em Atendimento': [], 'Concluído': [] };
+  const cols = {'Aberto':[],'Em Atendimento':[],'Concluído':[]};
   filtered.forEach(t => { if (cols[t.status]) cols[t.status].push(t); });
-
-  const prioColors = { 'Alta': 'badge-alta', 'Média': 'badge-media', 'Baixa': 'badge-baixa' };
-
-  ['aberto','atendimento','concluido'].forEach((key, i) => {
+  ['aberto','atendimento','concluido'].forEach((key,i) => {
     const statusKey = ['Aberto','Em Atendimento','Concluído'][i];
-    const colClass = ['','orange','green'][i];
+    const colClass  = ['','orange','green'][i];
     const cards = cols[statusKey];
-    document.getElementById('kc-' + key).textContent = cards.length;
-    document.getElementById('kanban-' + key).innerHTML = cards.length
+    document.getElementById('kc-'+key).textContent   = cards.length;
+    document.getElementById('kanban-'+key).innerHTML = cards.length
       ? cards.map(t => `
         <div class="kanban-card ${colClass}" onclick="openModal(${t.id})">
           <div class="kc-assunto">${t.assunto}</div>
@@ -1053,123 +1106,146 @@ function renderKanban(filtered) {
             <span>#${String(t.id).padStart(4,'0')}</span>
             <span>${t.setor}</span>
             <span><span class="badge ${prioClass(t.prioridade)}" style="padding:1px 6px;font-size:0.65rem">${t.prioridade}</span></span>
-            ${t.tecnico ? `<span>👤 ${t.tecnico.split(' ')[0]}</span>` : '<span style="color:var(--red)">Sem técnico</span>'}
+            ${t.tecnico?`<span>👤 ${t.tecnico.split(' ')[0]}</span>`:'<span style="color:var(--red)">Sem técnico</span>'}
           </div>
-        </div>
-      `).join('')
+        </div>`).join('')
       : '<div style="padding:16px;text-align:center;font-size:0.78rem;color:var(--gray-50)">Nenhum chamado</div>';
   });
 }
 
-function quickAtribuir(id, tecnico) {
+// ── quickAtribuir ─────────────────────────────────────────────
+async function quickAtribuir(id, tecnico) {
+  const fields = {tecnico};
   const t = tickets.find(x => x.id === id);
-  if (t) {
-    t.tecnico = tecnico;
-    if (tecnico && t.status === 'Aberto') t.status = 'Em Atendimento';
-    save(); updateBadges();
+  if (t && tecnico && t.status === 'Aberto') fields.status = 'Em Atendimento';
+  const updated = await apiUpdate(id, fields);
+  if (updated) {
+    const idx = tickets.findIndex(x => x.id === id);
+    if (idx !== -1) tickets[idx] = updated;
+    updateBadges();
     if (tecnico) showToast('🔧 Atribuído a ' + tecnico, 'green');
     renderTicketsView();
     renderDashboardIfVisible();
   }
 }
 
-// === DASHBOARD ===
-function renderDashboard() {
-  load();
-  const t = tickets;
-  document.getElementById('ds-total').textContent = t.length;
-  document.getElementById('ds-abertos').textContent = t.filter(x=>x.status==='Aberto').length;
-  document.getElementById('ds-andamento').textContent = t.filter(x=>x.status==='Em Atendimento').length;
-  document.getElementById('ds-concluidos').textContent = t.filter(x=>x.status==='Concluído').length;
-
-  // Setor chart
-  const setores = ['Comercial','CRA','Estágio','Pedagógico','Secretaria ADM'];
-  const setorCounts = setores.map(s => ({ name: s, count: t.filter(x=>x.setor===s).length }));
-  const maxS = Math.max(...setorCounts.map(x=>x.count), 1);
-  document.getElementById('chart-setor').innerHTML = setorCounts.map(s => `
-    <div class="bar-row">
-      <span class="bar-label">${s.name}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${Math.max(s.count/maxS*100,0)}%"></div></div>
-      <span class="bar-count">${s.count}</span>
-    </div>
-  `).join('');
-
-  // Tecnico chart
-  const tecnicos = ['Emanoel Estagiário','Ghabriel Estagiário','HermesonTI'];
-  const techCounts = tecnicos.map(te => ({ name: te.split(' ')[0], count: t.filter(x=>x.tecnico===te).length }));
-  const maxT = Math.max(...techCounts.map(x=>x.count), 1);
-  document.getElementById('chart-tecnico').innerHTML = techCounts.map((tc,i) => `
-    <div class="bar-row">
-      <span class="bar-label">${tc.name}</span>
-      <div class="bar-track"><div class="bar-fill ${['orange','green',''][i]}" style="width:${Math.max(tc.count/maxT*100,0)}%"></div></div>
-      <span class="bar-count">${tc.count}</span>
-    </div>
-  `).join('');
-
-  // Donut
-  const prios = [
-    { name:'Alta', count: t.filter(x=>x.prioridade==='Alta').length, color:'#da1e28' },
-    { name:'Média', count: t.filter(x=>x.prioridade==='Média').length, color:'#c48000' },
-    { name:'Baixa', count: t.filter(x=>x.prioridade==='Baixa').length, color:'#198038' },
-  ];
-  const total = prios.reduce((a,b)=>a+b.count,0) || 1;
-  const r = 38, cx = 50, cy = 50;
-  const circ = 2 * Math.PI * r;
-  let offset = 0;
-  let circles = '';
-  prios.forEach(p => {
-    const dash = (p.count / total) * circ;
-    circles += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="18" stroke-dasharray="${dash} ${circ - dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-    offset += dash;
-  });
-  document.getElementById('donut-svg').innerHTML = `<circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/>` + circles;
-  document.getElementById('donut-legend').innerHTML = prios.map(p => `
-    <div class="legend-item">
-      <span class="legend-dot" style="background:${p.color}"></span>
-      <span class="legend-name">${p.name}</span>
-      <span class="legend-val">${p.count}</span>
-    </div>
-  `).join('');
-
-  // Dashboard table (recent 10)
-  const tbody = document.getElementById('table-dashboard-body');
-  const recent = [...t].slice(0, 10);
-  if (!recent.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="8"><div class="empty-icon">📭</div><div>Nenhum chamado ainda</div></td></tr>`;
+// ── Dashboard ─────────────────────────────────────────────────
+async function renderDashboard() {
+  // Técnico normal: não vê dashboard
+  if (tiRole !== 'gestor') {
+    document.getElementById('view-dashboard').style.display = 'none';
+    document.getElementById('view-tickets').style.display   = 'block';
+    document.getElementById('topbar-page-name').textContent = 'Meus Chamados';
+    document.getElementById('tickets-view-title').textContent = 'Meus Chamados';
+    document.getElementById('f-tecnico').value = tiNome;
+    renderTicketsView();
     return;
   }
-  tbody.innerHTML = recent.map(t => `
-    <tr style="cursor:pointer" onclick="openModal(${t.id})">
-      <td><span class="tid">#${String(t.id).padStart(4,'0')}</span></td>
-      <td class="t-assunto">${t.assunto}</td>
-      <td class="t-nome">${t.nome}</td>
-      <td><span class="t-setor">${t.setor}</span></td>
-      <td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td>
-      <td><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
-      <td style="font-size:0.8rem">${t.tecnico || '<span style="color:var(--gray-50)">—</span>'}</td>
-      <td style="font-size:0.75rem;color:var(--gray-50)">${t.data}</td>
-    </tr>
-  `).join('');
+
+  try {
+    const resp = await fetch(`${API}/chamados/stats`, { headers: authHeaders() });
+    const stats = await resp.json();
+
+    const t = tickets;
+    document.getElementById('ds-total').textContent     = stats.total || 0;
+    document.getElementById('ds-abertos').textContent   = stats['Aberto'] || 0;
+    document.getElementById('ds-andamento').textContent = stats['Em Atendimento'] || 0;
+    document.getElementById('ds-concluidos').textContent= stats['Concluído'] || 0;
+
+    // Setor chart
+    const setores = ['Comercial','CRA','Estágio','Pedagógico','Secretaria ADM'];
+    const setorCounts = setores.map(s => ({ name:s, count:(stats.porSetor||{})[s]||0 }));
+    const maxS = Math.max(...setorCounts.map(x=>x.count),1);
+    document.getElementById('chart-setor').innerHTML = setorCounts.map(s=>`
+      <div class="bar-row">
+        <span class="bar-label">${s.name}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(s.count/maxS*100,0)}%"></div></div>
+        <span class="bar-count">${s.count}</span>
+      </div>`).join('');
+
+    // Técnico chart
+    const tecnicos = ['Emanoel Estagiário','Ghabriel Estagiário','HermesonTI'];
+    const techCounts = tecnicos.map((te,i) => ({ name:te.split(' ')[0], count:(stats.porTecnico||{})[te]||0, i }));
+    const maxT = Math.max(...techCounts.map(x=>x.count),1);
+    document.getElementById('chart-tecnico').innerHTML = techCounts.map(tc=>`
+      <div class="bar-row">
+        <span class="bar-label">${tc.name}</span>
+        <div class="bar-track"><div class="bar-fill ${['orange','green',''][tc.i]}" style="width:${Math.max(tc.count/maxT*100,0)}%"></div></div>
+        <span class="bar-count">${tc.count}</span>
+      </div>`).join('');
+
+    // Donut
+    const prios = [
+      {name:'Alta',  count:(stats.porPrioridade||{})['Alta']||0,  color:'#da1e28'},
+      {name:'Média', count:(stats.porPrioridade||{})['Média']||0, color:'#c48000'},
+      {name:'Baixa', count:(stats.porPrioridade||{})['Baixa']||0, color:'#198038'},
+    ];
+    const total = prios.reduce((a,b)=>a+b.count,0)||1;
+    const r=38,cx=50,cy=50,circ=2*Math.PI*r;
+    let offset=0, circles='';
+    prios.forEach(p=>{
+      const dash=(p.count/total)*circ;
+      circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="18" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+      offset+=dash;
+    });
+    document.getElementById('donut-svg').innerHTML=`<circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/>`+circles;
+    document.getElementById('donut-legend').innerHTML=prios.map(p=>`
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${p.color}"></span>
+        <span class="legend-name">${p.name}</span>
+        <span class="legend-val">${p.count}</span>
+      </div>`).join('');
+
+    // Tabela recente
+    const tbody = document.getElementById('table-dashboard-body');
+    const recent = [...t].slice(0,10);
+    if (!recent.length) {
+      tbody.innerHTML=`<tr class="empty-row"><td colspan="8"><div class="empty-icon">📭</div><div>Nenhum chamado ainda</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML=recent.map(t=>`
+      <tr style="cursor:pointer" onclick="openModal(${t.id})">
+        <td><span class="tid">#${String(t.id).padStart(4,'0')}</span></td>
+        <td class="t-assunto">${t.assunto}</td>
+        <td class="t-nome">${t.nome}</td>
+        <td><span class="t-setor">${t.setor}</span></td>
+        <td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td>
+        <td><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
+        <td style="font-size:0.8rem">${t.tecnico||'<span style="color:var(--gray-50)">—</span>'}</td>
+        <td style="font-size:0.75rem;color:var(--gray-50)">${t.data}</td>
+      </tr>`).join('');
+  } catch(e) { console.error('[Dashboard]', e); }
 }
 
 function renderDashboardIfVisible() {
   if (document.getElementById('view-dashboard').style.display !== 'none') renderDashboard();
 }
 
-// === MODAL ===
+// ── Modal ─────────────────────────────────────────────────────
 function openModal(id) {
   const t = tickets.find(x => x.id === id);
   if (!t) return;
   editingId = id;
-  document.getElementById('modal-id').textContent = '#' + String(t.id).padStart(4,'0');
+  document.getElementById('modal-id').textContent    = '#'+String(t.id).padStart(4,'0');
   document.getElementById('modal-title').textContent = t.assunto;
-  document.getElementById('modal-nome').textContent = t.nome;
+  document.getElementById('modal-nome').textContent  = t.nome;
   document.getElementById('modal-setor').textContent = t.setor;
-  document.getElementById('modal-data').textContent = t.data;
-  document.getElementById('modal-prio').innerHTML = `<span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span>`;
-  document.getElementById('modal-desc').textContent = t.descricao || 'Sem descrição fornecida.';
-  document.getElementById('modal-tecnico-sel').value = t.tecnico || '';
-  document.getElementById('modal-status-sel').value = t.status;
+  document.getElementById('modal-data').textContent  = t.data;
+  document.getElementById('modal-prio').innerHTML    = `<span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span>`;
+  document.getElementById('modal-desc').textContent  = t.descricao || 'Sem descrição fornecida.';
+
+  const selTecnico = document.getElementById('modal-tecnico-sel');
+  const selStatus  = document.getElementById('modal-status-sel');
+
+  selTecnico.value = t.tecnico || '';
+  selStatus.value  = t.status;
+
+  // Técnico: só edita se for seu ou sem dono
+  const podeEditar = tiRole === 'gestor' || !t.tecnico || t.tecnico === tiNome;
+  selTecnico.disabled = !podeEditar || tiRole === 'tecnico'; // técnico não troca o responsável
+  selStatus.disabled  = !podeEditar;
+  document.getElementById('modal-save-btn').style.display = podeEditar ? 'inline-flex' : 'none';
+
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -1177,39 +1253,79 @@ function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   editingId = null;
 }
-
 function closeModalOutside(e) {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
-function saveModal() {
+async function saveModal() {
   if (!editingId) return;
-  const t = tickets.find(x => x.id === editingId);
-  if (!t) return;
-  t.tecnico = document.getElementById('modal-tecnico-sel').value;
-  t.status = document.getElementById('modal-status-sel').value;
-  save(); load(); updateBadges();
-  closeModal();
-  showToast('✅ Chamado #' + String(t.id).padStart(4,'0') + ' atualizado', 'green');
-  renderTicketsView();
-  renderDashboardIfVisible();
+  const tecnico = document.getElementById('modal-tecnico-sel').value;
+  const status  = document.getElementById('modal-status-sel').value;
+  const fields  = tiRole === 'gestor' ? {tecnico, status} : {status};
+  // Técnico pode se auto-atribuir ao salvar
+  if (tiRole === 'tecnico') {
+    const t = tickets.find(x => x.id === editingId);
+    if (t && !t.tecnico) fields.tecnico = tiNome;
+  }
+  const updated = await apiUpdate(editingId, fields);
+  if (updated) {
+    const idx = tickets.findIndex(x => x.id === editingId);
+    if (idx !== -1) tickets[idx] = updated;
+    updateBadges();
+    closeModal();
+    showToast('✅ Chamado #'+String(updated.id).padStart(4,'0')+' atualizado','green');
+    renderTicketsView();
+    renderDashboardIfVisible();
+  }
 }
 
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast show' + (type ? ' ' + type : '');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  t.className = 'toast show' + (type?' '+type:'');
+  setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-// Init
-load();
-updateBadges();
-renderDashboard();
+// ── UI personalizada por role ─────────────────────────────────
+function applyRoleUI() {
+  // Mostra nome do usuário logado
+  const nomeEl = document.getElementById('sidebar-user-nome');
+  const roleEl = document.getElementById('sidebar-user-role');
+  if (nomeEl) nomeEl.textContent = tiNome;
+  if (roleEl) roleEl.textContent = tiRole === 'gestor' ? '👑 Gestor' : '🔧 Técnico';
 
-// Refresh from localStorage every 5s (to pick up new tickets from portal)
-setInterval(() => {
-  load();
+  // Esconde Dashboard para técnicos
+  const dashNav = document.getElementById('nav-dashboard');
+  if (dashNav && tiRole !== 'gestor') dashNav.style.display = 'none';
+
+  // Mostra botão de logout
+  const logoutBtn = document.getElementById('btn-logout');
+  if (logoutBtn) logoutBtn.style.display = 'flex';
+}
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  applyRoleUI();
+  await load();
+  updateBadges();
+  if (tiRole === 'gestor') {
+    renderDashboard();
+  } else {
+    // Técnico vai direto para seus chamados
+    document.getElementById('view-dashboard').style.display = 'none';
+    document.getElementById('view-tickets').style.display   = 'block';
+    document.getElementById('topbar-page-name').textContent   = 'Meus Chamados';
+    document.getElementById('tickets-view-title').textContent = 'Meus Chamados';
+    document.getElementById('tickets-view-sub').textContent   = '';
+    document.getElementById('f-tecnico').value = tiNome;
+    renderTicketsView();
+  }
+}
+init();
+
+// Refresh a cada 5s
+setInterval(async () => {
+  await load();
   updateBadges();
   renderDashboardIfVisible();
   if (document.getElementById('view-tickets').style.display !== 'none') renderTicketsView();

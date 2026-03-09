@@ -373,7 +373,7 @@ footer {
   <div class="topbar-divider"></div>
   <span class="topbar-title">Portal do Solicitante</span>
   <div class="topbar-spacer"></div>
-  <a href="tecnico.html" class="topbar-link">🔧 Acesso Técnico →</a>
+  <a href="login.html" class="topbar-link">🔧 Acesso Técnico →</a>
 </div>
 
 <div class="hero">
@@ -527,8 +527,7 @@ footer {
 <div class="toast" id="toast"></div>
 
 <script>
-let tickets = JSON.parse(localStorage.getItem('ti-tickets') || '[]');
-let nextId = parseInt(localStorage.getItem('ti-nextid') || '1');
+const API = 'http://localhost:5000/api';
 
 // Priority selection
 document.querySelectorAll('.prio-card').forEach(card => {
@@ -543,7 +542,7 @@ document.querySelectorAll('.prio-card').forEach(card => {
   });
 });
 
-function abrirChamado() {
+async function abrirChamado() {
   const nome = document.getElementById('nome').value.trim();
   const setor = document.getElementById('setor').value;
   const assunto = document.getElementById('assunto').value.trim();
@@ -554,23 +553,35 @@ function abrirChamado() {
   if (!setor) { showToast('⚠️ Selecione seu setor'); return; }
   if (!assunto) { showToast('⚠️ Descreva o título do chamado'); return; }
 
-  const ticket = {
-    id: nextId++,
-    nome, setor, assunto, descricao, prioridade,
-    status: 'Aberto',
-    tecnico: '',
-    data: new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }),
-    dataISO: new Date().toISOString()
-  };
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Enviando...';
 
-  tickets.unshift(ticket);
-  localStorage.setItem('ti-tickets', JSON.stringify(tickets));
-  localStorage.setItem('ti-nextid', nextId);
+  try {
+    const resp = await fetch(`${API}/chamados`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, setor, assunto, descricao, prioridade })
+    });
 
-  document.getElementById('form-container').style.display = 'none';
-  const ss = document.getElementById('success-screen');
-  ss.style.display = 'block';
-  document.getElementById('ticket-number').textContent = '#' + String(ticket.id).padStart(4,'0');
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Erro ao enviar');
+    }
+
+    const ticket = await resp.json();
+
+    document.getElementById('form-container').style.display = 'none';
+    const ss = document.getElementById('success-screen');
+    ss.style.display = 'block';
+    document.getElementById('ticket-number').textContent = '#' + String(ticket.id).padStart(4,'0');
+
+  } catch (e) {
+    showToast('❌ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>📤</span> Enviar Chamado';
+  }
 }
 
 function novoForm() {
