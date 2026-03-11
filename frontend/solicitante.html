@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal de Chamados TI Grau  Tecnico Cabo</title>
+<title>Portal de Chamados TI</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -373,7 +373,7 @@ footer {
   <div class="topbar-divider"></div>
   <span class="topbar-title">Portal do Solicitante</span>
   <div class="topbar-spacer"></div>
-  <a href="login.html" class="topbar-link">🔧 Acesso Técnico →</a>
+  <a href="tecnico.html" class="topbar-link">🔧 Acesso Técnico →</a>
 </div>
 
 <div class="hero">
@@ -404,7 +404,7 @@ footer {
       <div class="info-card-icon">🕐</div>
       <div>
         <h4>Horário de Suporte</h4>
-        <p>Segunda a Sábado, horário comercial. Urgências atendidas com prioridade.</p>
+        <p>Segunda a Sexta, horário comercial. Urgências atendidas com prioridade.</p>
       </div>
     </div>
   </div>
@@ -527,7 +527,8 @@ footer {
 <div class="toast" id="toast"></div>
 
 <script>
-const API = (window.location.hostname==='localhost'||window.location.hostname==='127.0.0.1') ? 'http://localhost:5000/api' : window.location.origin+'/api';
+let tickets = JSON.parse(localStorage.getItem('ti-tickets') || '[]');
+let nextId = parseInt(localStorage.getItem('ti-nextid') || '1');
 
 // Priority selection
 document.querySelectorAll('.prio-card').forEach(card => {
@@ -542,7 +543,7 @@ document.querySelectorAll('.prio-card').forEach(card => {
   });
 });
 
-async function abrirChamado() {
+function abrirChamado() {
   const nome = document.getElementById('nome').value.trim();
   const setor = document.getElementById('setor').value;
   const assunto = document.getElementById('assunto').value.trim();
@@ -553,35 +554,23 @@ async function abrirChamado() {
   if (!setor) { showToast('⚠️ Selecione seu setor'); return; }
   if (!assunto) { showToast('⚠️ Descreva o título do chamado'); return; }
 
-  const btn = document.querySelector('.btn-submit');
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Enviando...';
+  const ticket = {
+    id: nextId++,
+    nome, setor, assunto, descricao, prioridade,
+    status: 'Aberto',
+    tecnico: '',
+    data: new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'America/Recife' }),
+    dataISO: new Date().toISOString()
+  };
 
-  try {
-    const resp = await fetch(`${API}/chamados`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, setor, assunto, descricao, prioridade })
-    });
+  tickets.unshift(ticket);
+  localStorage.setItem('ti-tickets', JSON.stringify(tickets));
+  localStorage.setItem('ti-nextid', nextId);
 
-    if (!resp.ok) {
-      const err = await resp.json();
-      throw new Error(err.error || 'Erro ao enviar');
-    }
-
-    const ticket = await resp.json();
-
-    document.getElementById('form-container').style.display = 'none';
-    const ss = document.getElementById('success-screen');
-    ss.style.display = 'block';
-    document.getElementById('ticket-number').textContent = '#' + String(ticket.id).padStart(4,'0');
-
-  } catch (e) {
-    showToast('❌ ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<span>📤</span> Enviar Chamado';
-  }
+  document.getElementById('form-container').style.display = 'none';
+  const ss = document.getElementById('success-screen');
+  ss.style.display = 'block';
+  document.getElementById('ticket-number').textContent = '#' + String(ticket.id).padStart(4,'0');
 }
 
 function novoForm() {
