@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#161616">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TI Suporte">
+<title>TI Suporte — Painel Técnico</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+:root {
+  --blue: #0f62fe; --blue-dark: #0043ce; --blue-light: #edf5ff; --blue-mid: #d0e2ff;
+  --green: #198038; --green-light: #defbe6; --green-mid: #a7f0ba;
+  --orange: #b45309; --orange-light: #fff7ed; --orange-mid: #fed7aa;
+  --red: #da1e28; --red-light: #fff1f1;
+  --yellow: #c48000; --yellow-light: #fcf4d6;
+  --gray-10: #f4f4f4; --gray-20: #e0e0e0; --gray-30: #c6c6c6;
+  --gray-50: #8d8d8d; --gray-60: #6f6f6f; --gray-70: #525252;
+  --gray-80: #393939; --gray-90: #262626; --gray-100: #161616;
+  --sidebar-w: 220px; --topbar-h: 52px;
+}
+html, body { height: 100%; }
+body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-10); color: var(--gray-100); min-height: 100vh; overscroll-behavior: none; }
+
+/* TOPBAR */
+.topbar { height: var(--topbar-h); background: var(--gray-100); color: white; display: flex; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 300; }
+.topbar-brand { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 100%; flex-shrink: 0; }
+.brand-icon { background: var(--blue); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.brand-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; font-weight: 500; }
+.brand-sub { font-size: 0.62rem; color: var(--gray-50); }
+.topbar-middle { flex: 1; padding: 0 10px; display: flex; align-items: center; overflow: hidden; }
+.topbar-page-name { font-size: 0.82rem; color: white; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-actions { display: flex; align-items: center; gap: 6px; padding-right: 10px; flex-shrink: 0; }
+.topbar-btn { background: var(--blue); border: none; color: white; padding: 7px 10px; cursor: pointer; font-size: 0.72rem; font-family: 'IBM Plex Sans', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; border-radius: 2px; }
+.topbar-btn:active { background: var(--blue-dark); }
+.notif-btn { background: transparent; border: 1px solid var(--gray-80); color: var(--gray-30); padding: 6px 10px; cursor: pointer; font-size: 0.72rem; font-family: 'IBM Plex Sans', sans-serif; border-radius: 2px; white-space: nowrap; transition: all 0.15s; }
+.notif-btn.on { border-color: var(--green); color: var(--green); background: rgba(25,128,56,0.1); }
+
+/* HAMBURGER */
+.hamburger { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 10px 12px; font-size: 1.2rem; }
+
+/* SIDEBAR */
+.sidebar { width: var(--sidebar-w); background: var(--gray-90); position: fixed; top: var(--topbar-h); left: 0; bottom: 0; overflow-y: auto; z-index: 200; display: flex; flex-direction: column; transition: transform 0.25s ease; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 199; top: var(--topbar-h); }
+.sidebar-section { padding: 6px 0; border-bottom: 1px solid var(--gray-80); }
+.sidebar-section-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-60); padding: 10px 16px 5px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: var(--gray-30); cursor: pointer; font-size: 0.85rem; border-left: 3px solid transparent; user-select: none; transition: background 0.1s; }
+.nav-item:active { background: var(--gray-80); }
+.nav-item.active { background: #1a1a1a; color: white; border-left-color: var(--blue); }
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge { margin-left: auto; background: var(--blue); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; min-width: 20px; text-align: center; }
+.nav-badge.red { background: var(--red); }
+.nav-badge.orange { background: #d97706; }
+.sidebar-bottom { margin: auto 0 0; padding: 12px 16px; border-top: 1px solid var(--gray-80); background: #1a1a1a; }
+.sidebar-bottom-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-60); margin-bottom: 8px; }
+.tecnico-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.78rem; color: var(--gray-30); }
+.tecnico-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+/* MAIN */
+.main-content { margin-top: var(--topbar-h); padding: 14px; min-height: calc(100vh - var(--topbar-h)); }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+.page-title h1 { font-size: 1.15rem; font-weight: 700; }
+.page-title p { font-size: 0.76rem; color: var(--gray-50); margin-top: 2px; }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; margin-bottom: 14px; }
+.stat-card { background: white; border: 1px solid var(--gray-20); padding: 14px; position: relative; overflow: hidden; }
+.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.stat-card.blue::before { background: var(--blue); }
+.stat-card.orange::before { background: #d97706; }
+.stat-card.green::before { background: var(--green); }
+.stat-card.red::before { background: var(--red); }
+.stat-label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-50); font-weight: 600; margin-bottom: 5px; }
+.stat-value { font-size: 1.7rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+.stat-card.blue .stat-value { color: var(--blue); }
+.stat-card.orange .stat-value { color: #d97706; }
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.red .stat-value { color: var(--red); }
+.stat-sub { font-size: 0.67rem; color: var(--gray-50); margin-top: 4px; }
+
+/* CHARTS */
+.charts-row { display: grid; grid-template-columns: 1fr; gap: 2px; margin-bottom: 14px; }
+.chart-card { background: white; border: 1px solid var(--gray-20); padding: 14px; }
+.chart-card-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--gray-70); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-20); }
+.bar-chart { display: flex; flex-direction: column; gap: 9px; }
+.bar-row { display: flex; align-items: center; gap: 8px; }
+.bar-label { font-size: 0.71rem; color: var(--gray-70); min-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 11px; background: var(--gray-10); border: 1px solid var(--gray-20); overflow: hidden; }
+.bar-fill { height: 100%; background: var(--blue); transition: width 0.5s ease; }
+.bar-fill.orange { background: #d97706; }
+.bar-fill.green { background: var(--green); }
+.bar-count { font-size: 0.7rem; font-family: 'IBM Plex Mono', monospace; color: var(--gray-70); min-width: 16px; text-align: right; }
+.donut-wrap { display: flex; align-items: center; gap: 16px; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-name { flex: 1; color: var(--gray-70); }
+.legend-val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+
+/* FILTERS */
+.filters-bar { background: white; border: 1px solid var(--gray-20); padding: 10px; display: flex; flex-wrap: wrap; gap: 7px; align-items: center; margin-bottom: 2px; }
+.filter-select { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.82rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 9px 10px; color: var(--gray-100); outline: none; cursor: pointer; flex: 1; min-width: 140px; border-radius: 0; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238d8d8d' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 26px; }
+.filter-search { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.85rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 9px 12px; color: var(--gray-100); outline: none; width: 100%; border-radius: 0; }
+.filter-search:focus { border-color: var(--blue); background: var(--blue-light); }
+.btn-clear { font-size: 0.8rem; background: transparent; border: 1px solid var(--gray-30); padding: 9px 14px; cursor: pointer; color: var(--gray-70); font-family: 'IBM Plex Sans', sans-serif; white-space: nowrap; }
+
+/* TABLE */
+.tickets-table-wrap { background: white; border: 1px solid var(--gray-20); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tickets-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 580px; }
+.tickets-table th { background: var(--gray-90); color: white; text-align: left; padding: 10px 12px; font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; white-space: nowrap; }
+.tickets-table td { padding: 11px 12px; border-bottom: 1px solid var(--gray-20); vertical-align: middle; }
+.tickets-table tr:last-child td { border-bottom: none; }
+.tickets-table tbody tr:active td { background: #fafafa; }
+.tid { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--blue); font-weight: 500; }
+.t-assunto { font-weight: 600; max-width: 170px; }
+.t-assunto small { display: block; font-weight: 400; color: var(--gray-50); font-size: 0.67rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
+.t-nome { color: var(--gray-70); white-space: nowrap; }
+.t-setor { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 2px 6px; font-size: 0.67rem; font-weight: 600; white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; padding: 3px 7px; font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+.badge-aberto { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
+.badge-atendimento { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-mid); }
+.badge-concluido { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
+.badge-alta { background: var(--red-light); color: var(--red); }
+.badge-media { background: var(--yellow-light); color: var(--yellow); }
+.badge-baixa { background: var(--green-light); color: var(--green); }
+.table-select { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 6px 6px; color: var(--gray-100); outline: none; cursor: pointer; width: 100%; border-radius: 0; appearance: none; -webkit-appearance: none; }
+.btn-detail { background: transparent; border: 1px solid var(--gray-20); padding: 6px 10px; cursor: pointer; font-size: 0.72rem; font-family: inherit; color: var(--blue); white-space: nowrap; }
+.empty-row td { text-align: center; padding: 40px 20px; color: var(--gray-50); font-size: 0.85rem; }
+.empty-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.4; display: block; }
+
+/* KANBAN */
+.view-toggle { display: flex; }
+.vt-btn { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 9px 14px; cursor: pointer; font-size: 0.82rem; color: var(--gray-70); font-family: 'IBM Plex Sans', sans-serif; }
+.vt-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
+.vt-btn:not(:last-child) { border-right: none; }
+.kanban-board { display: flex; flex-direction: column; gap: 10px; }
+.kanban-col { background: var(--gray-10); border: 1px solid var(--gray-20); }
+.kanban-col-header { padding: 11px 14px; border-bottom: 1px solid var(--gray-20); display: flex; align-items: center; justify-content: space-between; background: white; }
+.kanban-col-title { font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.kanban-count { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; background: var(--gray-20); padding: 2px 8px; border-radius: 10px; }
+.kanban-cards { padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 40px; }
+.kanban-card { background: white; border: 1px solid var(--gray-20); border-left: 3px solid var(--blue); padding: 12px; cursor: pointer; }
+.kanban-card:active { opacity: 0.75; }
+.kanban-card.k-orange { border-left-color: #d97706; }
+.kanban-card.k-green { border-left-color: var(--green); }
+.kc-assunto { font-size: 0.82rem; font-weight: 600; margin-bottom: 6px; }
+.kc-meta { font-size: 0.7rem; color: var(--gray-50); display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+
+/* MODAL — bottom sheet mobile */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; }
+.modal-overlay.open { display: flex; align-items: flex-end; }
+.modal-panel { background: white; width: 100%; max-height: 92vh; overflow-y: auto; display: flex; flex-direction: column; border-radius: 18px 18px 0 0; animation: slideUp 0.28s ease; -webkit-overflow-scrolling: touch; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 44px; height: 5px; background: var(--gray-30); border-radius: 3px; margin: 12px auto 4px; flex-shrink: 0; }
+.modal-header { background: var(--gray-90); color: white; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+.modal-header h3 { font-size: 0.88rem; font-weight: 700; flex: 1; padding-right: 10px; }
+.modal-id { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--gray-50); margin-bottom: 2px; }
+.modal-close { background: transparent; border: none; color: white; cursor: pointer; font-size: 1.4rem; padding: 4px 6px; flex-shrink: 0; }
+.modal-body { padding: 18px; flex: 1; padding-bottom: 32px; }
+.modal-section { margin-bottom: 18px; }
+.modal-section-title { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-50); font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--gray-20); }
+.modal-field { margin-bottom: 10px; }
+.modal-field label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-50); font-weight: 600; display: block; margin-bottom: 3px; }
+.modal-field .val { font-size: 0.9rem; color: var(--gray-100); }
+.modal-desc { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 12px; font-size: 0.84rem; line-height: 1.6; color: var(--gray-70); white-space: pre-wrap; border-radius: 2px; }
+.modal-select-label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-70); font-weight: 600; margin-bottom: 5px; display: block; }
+.modal-select { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 16px; background: var(--gray-10); border: none; border-bottom: 2px solid var(--gray-30); padding: 13px 12px; color: var(--gray-100); outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; border-radius: 0; }
+.modal-select:focus { border-bottom-color: var(--blue); background: var(--blue-light); }
+.modal-controls { display: flex; flex-direction: column; gap: 12px; }
+.btn-save { background: var(--blue); color: white; border: none; padding: 17px; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 8px; border-radius: 6px; }
+.btn-save:active { background: var(--blue-dark); }
+.btn-save:disabled { background: var(--gray-30); }
+
+/* NOTIF BANNER (mobile only) */
+.notif-banner { background: var(--gray-90); color: white; padding: 12px 14px; display: none; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; border-left: 4px solid var(--blue); border-radius: 2px; }
+.notif-banner p { font-size: 0.8rem; flex: 1; line-height: 1.4; }
+.notif-banner .notif-ativar { background: var(--blue); border: none; color: white; padding: 8px 14px; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 3px; white-space: nowrap; }
+.notif-banner .notif-dismiss { background: transparent; border: 1px solid var(--gray-70); color: var(--gray-30); padding: 8px 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.8rem; cursor: pointer; border-radius: 3px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--gray-90); color: white; padding: 13px 20px; font-size: 0.86rem; font-weight: 500; z-index: 9999; opacity: 0; transition: all 0.28s; border-left: 4px solid var(--blue); width: calc(100% - 32px); max-width: 380px; text-align: center; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.green { border-left-color: var(--green); }
+.toast.red { border-left-color: var(--red); }
+
+/* DESKTOP */
+@media (min-width: 768px) {
+  .hamburger { display: none !important; }
+  .topbar-brand { width: var(--sidebar-w); border-right: 1px solid var(--gray-80); }
+  .sidebar { transform: none !important; }
+  .main-content { margin-left: var(--sidebar-w); padding: 24px; }
+  .stats-row { grid-template-columns: repeat(4, 1fr); }
+  .charts-row { grid-template-columns: 1fr 1fr 1fr; }
+  .kanban-board { flex-direction: row; }
+  .kanban-col { flex: 1; }
+  .modal-overlay { align-items: flex-start; justify-content: flex-end; padding-top: var(--topbar-h); }
+  .modal-panel { width: 500px; height: calc(100vh - var(--topbar-h)); max-height: none; border-radius: 0; animation: slideIn 0.22s ease; padding-bottom: 0; }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal-handle { display: none; }
+  .filter-search { width: auto; flex: 1; min-width: 160px; }
+  .notif-banner { display: none !important; }
+}
+
+/* MOBILE */
+@media (max-width: 767px) {
+  .hamburger { display: block; }
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .topbar-brand { border-right: none; }
+  .brand-sub { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="topbar-brand">
+    <div class="brand-icon">💻</div>
+    <div><div class="brand-name">TI_SUPORTE</div><div class="brand-sub">Painel Técnico</div></div>
+  </div>
+  <div class="topbar-middle">
+    <span class="topbar-page-name" id="topbar-page-name">Dashboard</span>
+  </div>
+  <div class="topbar-actions">
+    <button class="notif-btn" id="notif-btn" onclick="toggleNotificacoes()">🔔 Notificar</button>
+    <a href="/solicitante.html" class="topbar-btn">📤 Portal</a>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Visão Geral</div>
+    <div class="nav-item active" onclick="showView('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Chamados</div>
+    <div class="nav-item" onclick="showView('todos',this)"><span class="nav-icon">📋</span> Todos <span class="nav-badge" id="badge-todos">0</span></div>
+    <div class="nav-item" onclick="showView('abertos',this)"><span class="nav-icon">🔵</span> Abertos <span class="nav-badge red" id="badge-abertos">0</span></div>
+    <div class="nav-item" onclick="showView('andamento',this)"><span class="nav-icon">🟠</span> Em Atendimento <span class="nav-badge orange" id="badge-andamento">0</span></div>
+    <div class="nav-item" onclick="showView('concluidos',this)"><span class="nav-icon">✅</span> Concluídos</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Por Técnico</div>
+    <div class="nav-item" onclick="filterTecnico('Emanoel Estagiário',this)"><span class="nav-icon">👤</span> Emanoel</div>
+    <div class="nav-item" onclick="filterTecnico('Ghabriel Estagiário',this)"><span class="nav-icon">👤</span> Ghabriel</div>
+    <div class="nav-item" onclick="filterTecnico('HermesonTI',this)"><span class="nav-icon">👤</span> HermesonTI</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-bottom-label">Equipe</div>
+    <div class="tecnico-item"><span class="tecnico-dot"></span> Emanoel Estagiário</div>
+    <div class="tecnico-item"><span class="tecnico-dot"></span> Ghabriel Estagiário</div>
+    <div class="tecnico-item"><span class="tecnico-dot"></span> HermesonTI</div>
+  </div>
+</div>
+
+<div class="main-content">
+
+  <div class="notif-banner" id="notif-banner">
+    <p>🔔 Ative notificações para ser avisado de novos chamados mesmo com a tela fechada.</p>
+    <button class="notif-ativar" onclick="toggleNotificacoes()">Ativar</button>
+    <button class="notif-dismiss" onclick="document.getElementById('notif-banner').style.display='none'">✕</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="view-dashboard">
+    <div class="page-header">
+      <div class="page-title"><h1>Dashboard</h1><p>Visão geral em tempo real</p></div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card blue"><div class="stat-label">Total</div><div class="stat-value" id="ds-total">0</div><div class="stat-sub">registros</div></div>
+      <div class="stat-card red"><div class="stat-label">Abertos</div><div class="stat-value" id="ds-abertos">0</div><div class="stat-sub">aguardando</div></div>
+      <div class="stat-card orange"><div class="stat-label">Atendimento</div><div class="stat-value" id="ds-andamento">0</div><div class="stat-sub">em progresso</div></div>
+      <div class="stat-card green"><div class="stat-label">Concluídos</div><div class="stat-value" id="ds-concluidos">0</div><div class="stat-sub">resolvidos</div></div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card"><div class="chart-card-title">Por Setor</div><div class="bar-chart" id="chart-setor"></div></div>
+      <div class="chart-card"><div class="chart-card-title">Por Técnico</div><div class="bar-chart" id="chart-tecnico"></div></div>
+      <div class="chart-card"><div class="chart-card-title">Por Prioridade</div><div class="donut-wrap"><svg width="90" height="90" viewBox="0 0 100 100" id="donut-svg"><circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/></svg><div class="donut-legend" id="donut-legend"></div></div></div>
+    </div>
+    <div class="tickets-table-wrap">
+      <table class="tickets-table">
+        <thead><tr><th>ID</th><th>Assunto</th><th>Solicitante</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Técnico</th><th>Data</th></tr></thead>
+        <tbody id="table-dashboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TICKETS -->
+  <div id="view-tickets" style="display:none;">
+    <div class="page-header">
+      <div class="page-title"><h1 id="tickets-view-title">Chamados</h1><p id="tickets-view-sub"></p></div>
+      <div class="view-toggle">
+        <button class="vt-btn active" onclick="setTicketsView('table',this)">☰ Lista</button>
+        <button class="vt-btn" onclick="setTicketsView('kanban',this)">⊞ Kanban</button>
+      </div>
+    </div>
+    <div class="filters-bar">
+      <input class="filter-search" id="search-input" placeholder="🔍 Buscar assunto ou nome..." oninput="renderTicketsView()">
+      <select class="filter-select" id="f-status" onchange="renderTicketsView()"><option value="">Todos os status</option><option>Aberto</option><option>Em Atendimento</option><option>Concluído</option></select>
+      <select class="filter-select" id="f-setor" onchange="renderTicketsView()"><option value="">Todos os setores</option><option>Comercial</option><option>CRA</option><option>Estágio</option><option>Pedagógico</option><option>Secretaria ADM</option></select>
+      <select class="filter-select" id="f-prio" onchange="renderTicketsView()"><option value="">Todas as prioridades</option><option>Alta</option><option>Média</option><option>Baixa</option></select>
+      <select class="filter-select" id="f-tecnico" onchange="renderTicketsView()"><option value="">Todos os técnicos</option><option>Emanoel Estagiário</option><option>Ghabriel Estagiário</option><option>HermesonTI</option><option value="__sem__">Sem técnico</option></select>
+      <button class="btn-clear" onclick="clearFilters()">✕ Limpar</button>
+    </div>
+    <div id="table-view">
+      <div class="tickets-table-wrap">
+        <table class="tickets-table">
+          <thead><tr><th>ID</th><th>Assunto</th><th>Nome</th><th>Setor</th><th>Prio.</th><th>Status</th><th>Técnico</th><th>Data</th><th></th></tr></thead>
+          <tbody id="tickets-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="kanban-view" style="display:none;">
+      <div class="kanban-board">
+        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid var(--blue)"><span class="kanban-col-title" style="color:var(--blue)">🔵 Aberto</span><span class="kanban-count" id="kc-aberto">0</span></div><div class="kanban-cards" id="kanban-aberto"></div></div>
+        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #d97706"><span class="kanban-col-title" style="color:#d97706">🟠 Em Atendimento</span><span class="kanban-count" id="kc-atendimento">0</span></div><div class="kanban-cards" id="kanban-atendimento"></div></div>
+        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid var(--green)"><span class="kanban-col-title" style="color:var(--green)">✅ Concluído</span><span class="kanban-count" id="kc-concluido">0</span></div><div class="kanban-cards" id="kanban-concluido"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-panel">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div style="flex:1;min-width:0">
+        <div class="modal-id" id="modal-id">#0001</div>
+        <h3 id="modal-title">—</h3>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">Informações</div>
+        <div class="modal-field"><label>Solicitante</label><div class="val" id="modal-nome">—</div></div>
+        <div class="modal-field"><label>Setor</label><div class="val" id="modal-setor">—</div></div>
+        <div class="modal-field"><label>Data de abertura</label><div class="val" id="modal-data">—</div></div>
+        <div class="modal-field"><label>Prioridade</label><div class="val" id="modal-prio">—</div></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Descrição</div>
+        <div class="modal-desc" id="modal-desc">—</div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Atendimento</div>
+        <div class="modal-controls">
+          <div>
+            <span class="modal-select-label">Técnico responsável</span>
+            <select class="modal-select" id="modal-tecnico-sel">
+              <option value="">— Sem técnico —</option>
+              <option>Emanoel Estagiário</option>
+              <option>Ghabriel Estagiário</option>
+              <option>HermesonTI</option>
+            </select>
+          </div>
+          <div>
+            <span class="modal-select-label">Status do chamado</span>
+            <select class="modal-select" id="modal-status-sel">
+              <option>Aberto</option>
+              <option>Em Atendimento</option>
+              <option>Concluído</option>
+            </select>
+          </div>
+          <button class="btn-save" id="btn-save-modal" onclick="saveModal()">💾 Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let tickets = [];
+let ticketsDisplayMode = 'table';
+let editingId = null;
+let currentStatusFilter = '';
+let lastCount = null;
+let notificacoesAtivas = false;
+let audioCtx = null;
+
+// ===== SOM =====
+function beep() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    o.start(audioCtx.currentTime); o.stop(audioCtx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ===== NOTIFICAÇÕES =====
+async function toggleNotificacoes() {
+  if (notificacoesAtivas) {
+    notificacoesAtivas = false;
+    updateNotifBtn();
+    showToast('🔕 Notificações desativadas');
+    return;
+  }
+  if (!('Notification' in window)) {
+    showToast('❌ Navegador não suporta notificações', 'red');
+    return;
+  }
+  const perm = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
+
+  if (perm === 'granted') {
+    notificacoesAtivas = true;
+    updateNotifBtn();
+    document.getElementById('notif-banner').style.display = 'none';
+    showToast('🔔 Notificações ativadas!', 'green');
+    new Notification('✅ TI Suporte', {
+      body: 'Você será notificado quando chegar um novo chamado.',
+      icon: 'https://cdn-icons-png.flaticon.com/512/565/565547.png'
+    });
+  } else {
+    showToast('❌ Permissão negada. Verifique as configurações do navegador.', 'red');
+  }
+}
+
+function updateNotifBtn() {
+  const btn = document.getElementById('notif-btn');
+  btn.textContent = notificacoesAtivas ? '🔔 Ativo' : '🔔 Notificar';
+  btn.classList.toggle('on', notificacoesAtivas);
+}
+
+function notificarNovoChamado(ticket) {
+  beep();
+  showToast(`🆕 Novo chamado: ${ticket.assunto} (${ticket.setor})`, 'green');
+  if (notificacoesAtivas && Notification.permission === 'granted') {
+    const n = new Notification(`🆕 Novo Chamado — ${ticket.setor}`, {
+      body: `${ticket.nome}: ${ticket.assunto}\nPrioridade: ${ticket.prioridade}`,
+      icon: 'https://cdn-icons-png.flaticon.com/512/565/565547.png',
+      tag: 'chamado-' + ticket.id,
+      requireInteraction: ticket.prioridade === 'Alta'
+    });
+    n.onclick = () => { window.focus(); openModal(ticket.id); n.close(); };
+  }
+}
+
+// ===== API =====
+async function fetchTickets() {
+  try {
+    const res = await fetch('/api/chamados');
+    const novos = await res.json();
+    if (lastCount !== null && novos.length > lastCount) {
+      novos.slice(0, novos.length - lastCount).forEach(t => notificarNovoChamado(t));
+    }
+    lastCount = novos.length;
+    tickets = novos;
+    updateBadges();
+  } catch(e) { console.error(e); }
+}
+
+function updateBadges() {
+  document.getElementById('badge-todos').textContent = tickets.length;
+  document.getElementById('badge-abertos').textContent = tickets.filter(t=>t.status==='Aberto').length;
+  document.getElementById('badge-andamento').textContent = tickets.filter(t=>t.status==='Em Atendimento').length;
+}
+
+const statusClass = s => s==='Aberto'?'badge-aberto':s==='Em Atendimento'?'badge-atendimento':'badge-concluido';
+const prioClass = p => p==='Alta'?'badge-alta':p==='Média'?'badge-media':'badge-baixa';
+const fmtId = id => '#'+String(id).padStart(4,'0');
+
+// ===== VIEWS =====
+async function showView(view, el) {
+  closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('view-dashboard').style.display='none';
+  document.getElementById('view-tickets').style.display='none';
+  currentStatusFilter='';
+  await fetchTickets();
+  if(view==='dashboard') {
+    document.getElementById('topbar-page-name').textContent='Dashboard';
+    document.getElementById('view-dashboard').style.display='block';
+    renderDashboard();
+  } else {
+    document.getElementById('view-tickets').style.display='block';
+    const labels={todos:'Todos',abertos:'Abertos',andamento:'Em Atendimento',concluidos:'Concluídos'};
+    const statusMap={abertos:'Aberto',andamento:'Em Atendimento',concluidos:'Concluído',todos:''};
+    document.getElementById('tickets-view-title').textContent=labels[view]||'Chamados';
+    document.getElementById('topbar-page-name').textContent=labels[view]||'Chamados';
+    currentStatusFilter=statusMap[view]||'';
+    document.getElementById('f-status').value=currentStatusFilter;
+    document.getElementById('f-tecnico').value='';
+    renderTicketsView();
+  }
+}
+
+async function filterTecnico(name, el) {
+  closeSidebar();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('view-dashboard').style.display='none';
+  document.getElementById('view-tickets').style.display='block';
+  document.getElementById('topbar-page-name').textContent=name.split(' ')[0];
+  document.getElementById('tickets-view-title').textContent=name;
+  currentStatusFilter='';
+  document.getElementById('f-status').value='';
+  document.getElementById('f-tecnico').value=name;
+  await fetchTickets();
+  renderTicketsView();
+}
+
+function setTicketsView(mode, btn) {
+  ticketsDisplayMode=mode;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('table-view').style.display=mode==='table'?'block':'none';
+  document.getElementById('kanban-view').style.display=mode==='kanban'?'block':'none';
+  renderTicketsView();
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value='';
+  document.getElementById('f-status').value=currentStatusFilter;
+  document.getElementById('f-setor').value='';
+  document.getElementById('f-prio').value='';
+  document.getElementById('f-tecnico').value='';
+  renderTicketsView();
+}
+
+function getFiltered() {
+  const search=(document.getElementById('search-input').value||'').toLowerCase();
+  const fStatus=document.getElementById('f-status').value;
+  const fSetor=document.getElementById('f-setor').value;
+  const fPrio=document.getElementById('f-prio').value;
+  const fTecnico=document.getElementById('f-tecnico').value;
+  return tickets.filter(t=>{
+    if(fStatus&&t.status!==fStatus) return false;
+    if(fSetor&&t.setor!==fSetor) return false;
+    if(fPrio&&t.prioridade!==fPrio) return false;
+    if(fTecnico==='__sem__'&&t.tecnico) return false;
+    if(fTecnico&&fTecnico!=='__sem__'&&t.tecnico!==fTecnico) return false;
+    if(search&&!t.assunto.toLowerCase().includes(search)&&!t.nome.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+function renderTicketsView() {
+  const filtered=getFiltered();
+  document.getElementById('tickets-view-sub').textContent=filtered.length+' chamado(s)';
+  if(ticketsDisplayMode==='table') renderTable(filtered);
+  else renderKanban(filtered);
+}
+
+function renderTable(filtered) {
+  const tbody=document.getElementById('tickets-table-body');
+  if(!filtered.length){tbody.innerHTML=`<tr class="empty-row"><td colspan="9"><span class="empty-icon">📭</span>Nenhum chamado encontrado</td></tr>`;return;}
+  tbody.innerHTML=filtered.map(t=>`<tr>
+    <td><span class="tid">${fmtId(t.id)}</span></td>
+    <td class="t-assunto">${t.assunto}<small>${t.descricao?t.descricao.substring(0,50)+'…':'—'}</small></td>
+    <td class="t-nome">${t.nome}</td>
+    <td><span class="t-setor">${t.setor}</span></td>
+    <td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td>
+    <td><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
+    <td><select class="table-select" onchange="quickAtribuir(${t.id},this.value)">
+      <option value="">Sem técnico</option>
+      <option ${t.tecnico==='Emanoel Estagiário'?'selected':''}>Emanoel Estagiário</option>
+      <option ${t.tecnico==='Ghabriel Estagiário'?'selected':''}>Ghabriel Estagiário</option>
+      <option ${t.tecnico==='HermesonTI'?'selected':''}>HermesonTI</option>
+    </select></td>
+    <td style="font-size:0.7rem;color:var(--gray-50);white-space:nowrap">${t.data||'—'}</td>
+    <td><button class="btn-detail" onclick="openModal(${t.id})">Ver</button></td>
+  </tr>`).join('');
+}
+
+function renderKanban(filtered) {
+  const cols={'Aberto':[],'Em Atendimento':[],'Concluído':[]};
+  filtered.forEach(t=>{if(cols[t.status])cols[t.status].push(t);});
+  [['aberto','Aberto',''],['atendimento','Em Atendimento','k-orange'],['concluido','Concluído','k-green']].forEach(([key,sk,cls])=>{
+    const cards=cols[sk];
+    document.getElementById('kc-'+key).textContent=cards.length;
+    document.getElementById('kanban-'+key).innerHTML=cards.length
+      ?cards.map(t=>`<div class="kanban-card ${cls}" onclick="openModal(${t.id})"><div class="kc-assunto">${t.assunto}</div><div class="kc-meta"><span>${fmtId(t.id)}</span><span>${t.setor}</span><span class="badge ${prioClass(t.prioridade)}" style="padding:2px 6px;font-size:0.62rem">${t.prioridade}</span>${t.tecnico?`<span>👤 ${t.tecnico.split(' ')[0]}</span>`:'<span style="color:var(--red)">Sem técnico</span>'}</div></div>`).join('')
+      :'<div style="padding:14px;text-align:center;font-size:0.75rem;color:var(--gray-50)">Nenhum</div>';
+  });
+}
+
+async function quickAtribuir(id, tecnico) {
+  const t=tickets.find(x=>x.id===id); if(!t) return;
+  const novoStatus=tecnico&&t.status==='Aberto'?'Em Atendimento':t.status;
+  await fetch(`/api/chamados?id=${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tecnico,status:novoStatus})});
+  await fetchTickets(); renderTicketsView();
+  if(tecnico) showToast('🔧 Atribuído a '+tecnico,'green');
+}
+
+function renderDashboard() {
+  const t=tickets;
+  document.getElementById('ds-total').textContent=t.length;
+  document.getElementById('ds-abertos').textContent=t.filter(x=>x.status==='Aberto').length;
+  document.getElementById('ds-andamento').textContent=t.filter(x=>x.status==='Em Atendimento').length;
+  document.getElementById('ds-concluidos').textContent=t.filter(x=>x.status==='Concluído').length;
+  const setores=['Comercial','CRA','Estágio','Pedagógico','Secretaria ADM'];
+  const sc=setores.map(s=>({name:s,count:t.filter(x=>x.setor===s).length}));
+  const ms=Math.max(...sc.map(x=>x.count),1);
+  document.getElementById('chart-setor').innerHTML=sc.map(s=>`<div class="bar-row"><span class="bar-label">${s.name}</span><div class="bar-track"><div class="bar-fill" style="width:${s.count/ms*100}%"></div></div><span class="bar-count">${s.count}</span></div>`).join('');
+  const tecs=['Emanoel Estagiário','Ghabriel Estagiário','HermesonTI'];
+  const tc=tecs.map((te,i)=>({name:te.split(' ')[0],count:t.filter(x=>x.tecnico===te).length,cls:['orange','green',''][i]}));
+  const mt=Math.max(...tc.map(x=>x.count),1);
+  document.getElementById('chart-tecnico').innerHTML=tc.map(x=>`<div class="bar-row"><span class="bar-label">${x.name}</span><div class="bar-track"><div class="bar-fill ${x.cls}" style="width:${x.count/mt*100}%"></div></div><span class="bar-count">${x.count}</span></div>`).join('');
+  const prios=[{name:'Alta',count:t.filter(x=>x.prioridade==='Alta').length,color:'#da1e28'},{name:'Média',count:t.filter(x=>x.prioridade==='Média').length,color:'#c48000'},{name:'Baixa',count:t.filter(x=>x.prioridade==='Baixa').length,color:'#198038'}];
+  const tot=prios.reduce((a,b)=>a+b.count,0)||1;
+  const r=38,cx=50,cy=50,circ=2*Math.PI*r;let off=0,circles='';
+  prios.forEach(p=>{const d=(p.count/tot)*circ;circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="18" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;off+=d;});
+  document.getElementById('donut-svg').innerHTML=`<circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/>`+circles;
+  document.getElementById('donut-legend').innerHTML=prios.map(p=>`<div class="legend-item"><span class="legend-dot" style="background:${p.color}"></span><span class="legend-name">${p.name}</span><span class="legend-val">${p.count}</span></div>`).join('');
+  const tbody=document.getElementById('table-dashboard-body');
+  const recent=t.slice(0,10);
+  if(!recent.length){tbody.innerHTML=`<tr class="empty-row"><td colspan="8"><span class="empty-icon">📭</span>Nenhum chamado ainda</td></tr>`;return;}
+  tbody.innerHTML=recent.map(t=>`<tr style="cursor:pointer" onclick="openModal(${t.id})"><td><span class="tid">${fmtId(t.id)}</span></td><td class="t-assunto">${t.assunto}</td><td class="t-nome">${t.nome}</td><td><span class="t-setor">${t.setor}</span></td><td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td><td><span class="badge ${statusClass(t.status)}">${t.status}</span></td><td style="font-size:0.78rem">${t.tecnico||'—'}</td><td style="font-size:0.7rem;color:var(--gray-50)">${t.data||'—'}</td></tr>`).join('');
+}
+
+// ===== MODAL =====
+function openModal(id) {
+  const t=tickets.find(x=>x.id===id); if(!t) return;
+  editingId=id;
+  document.getElementById('modal-id').textContent=fmtId(t.id);
+  document.getElementById('modal-title').textContent=t.assunto;
+  document.getElementById('modal-nome').textContent=t.nome;
+  document.getElementById('modal-setor').textContent=t.setor;
+  document.getElementById('modal-data').textContent=t.data||'—';
+  document.getElementById('modal-prio').innerHTML=`<span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span>`;
+  document.getElementById('modal-desc').textContent=t.descricao||'Sem descrição fornecida.';
+  document.getElementById('modal-tecnico-sel').value=t.tecnico||'';
+  document.getElementById('modal-status-sel').value=t.status;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  editingId=null;
+}
+function closeModalOutside(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+async function saveModal() {
+  if(!editingId) return;
+  const btn=document.getElementById('btn-save-modal');
+  btn.disabled=true; btn.textContent='⏳ Salvando...';
+  const tecnico=document.getElementById('modal-tecnico-sel').value;
+  const status=document.getElementById('modal-status-sel').value;
+  await fetch(`/api/chamados?id=${editingId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tecnico,status})});
+  await fetchTickets();
+  btn.disabled=false; btn.textContent='💾 Salvar Alterações';
+  closeModal();
+  showToast('✅ Chamado atualizado!','green');
+  if(document.getElementById('view-dashboard').style.display!=='none') renderDashboard();
+  else renderTicketsView();
+}
+
+function showToast(msg, type) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ===== INIT =====
+(async()=>{
+  await fetchTickets();
+  renderDashboard();
+  // Banner mobile se ainda não pediu permissão
+  if (window.innerWidth < 768 && 'Notification' in window && Notification.permission === 'default') {
+    document.getElementById('notif-banner').style.display = 'flex';
+  }
+  // Se já tinha permissão, ativa silenciosamente
+  if ('Notification' in window && Notification.permission === 'granted') {
+    notificacoesAtivas = true;
+    updateNotifBtn();
+  }
+})();
+
+setInterval(async()=>{
+  await fetchTickets();
+  if(document.getElementById('view-dashboard').style.display!=='none') renderDashboard();
+  else if(document.getElementById('view-tickets').style.display!=='none') renderTicketsView();
+}, 15000);
+</script>
+</body>
+</html>
