@@ -3,5 +3,5 @@
     { "source": "/api/chamados", "destination": "/api/chamados" },
     { "source": "/api/chamados/:id", "destination": "/api/chamados" }
   ],
-  "public": "public"
+  "outputDirectory": "public"
 }
