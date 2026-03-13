@@ -8,6 +8,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+    // CREATE TABLE if not exists
     await sql`
       CREATE TABLE IF NOT EXISTS chamados (
         id SERIAL PRIMARY KEY,
@@ -23,11 +24,13 @@ export default async function handler(req, res) {
       )
     `;
 
+    // GET - listar todos
     if (req.method === 'GET') {
       const { rows } = await sql`SELECT * FROM chamados ORDER BY id DESC`;
       return res.status(200).json(rows);
     }
 
+    // POST - criar novo chamado
     if (req.method === 'POST') {
       const { nome, setor, assunto, descricao, prioridade, data } = req.body;
       if (!nome || !setor || !assunto) {
@@ -41,9 +44,9 @@ export default async function handler(req, res) {
       return res.status(201).json(rows[0]);
     }
 
+    // PATCH - atualizar chamado
     if (req.method === 'PATCH') {
-      // Pega o id tanto de /api/chamados?id=X quanto de /api/chamados/X (via rewrite)
-      const id = req.query.id;
+      const { id } = req.query;
       const { tecnico, status } = req.body;
       if (!id) return res.status(400).json({ error: 'ID obrigatório' });
       const { rows } = await sql`
@@ -52,7 +55,6 @@ export default async function handler(req, res) {
         WHERE id = ${id}
         RETURNING *
       `;
-      if (!rows.length) return res.status(404).json({ error: 'Chamado não encontrado' });
       return res.status(200).json(rows[0]);
     }
 
