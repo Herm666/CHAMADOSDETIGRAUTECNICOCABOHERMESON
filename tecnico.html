@@ -178,6 +178,27 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-10); col
 .toast.green { border-left-color: var(--green); }
 .toast.red { border-left-color: var(--red); }
 
+/* LOGIN */
+.login-screen { position: fixed; inset: 0; background: var(--gray-100); display: flex; align-items: center; justify-content: center; z-index: 9000; padding: 20px; }
+.login-box { background: var(--gray-90); border: 1px solid var(--gray-80); width: 100%; max-width: 380px; }
+.login-header { background: var(--gray-100); border-bottom: 1px solid var(--gray-80); padding: 24px; text-align: center; }
+.login-logo { background: var(--blue); width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px; }
+.login-header h2 { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; color: white; font-weight: 500; }
+.login-header p { font-size: 0.75rem; color: var(--gray-50); margin-top: 4px; }
+.login-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.login-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-30); display: block; margin-bottom: 6px; }
+.login-select { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; background: var(--gray-80); border: none; border-bottom: 2px solid var(--gray-60); padding: 12px; color: white; outline: none; cursor: pointer; -webkit-appearance: none; border-radius: 0; transition: border-color 0.15s; }
+.login-select:focus { border-bottom-color: var(--blue); background: #1a2a4a; }
+.login-select option { background: var(--gray-90); }
+.login-input { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; background: var(--gray-80); border: none; border-bottom: 2px solid var(--gray-60); padding: 12px; color: white; outline: none; border-radius: 0; transition: border-color 0.15s; }
+.login-input:focus { border-bottom-color: var(--blue); background: #1a2a4a; }
+.login-input::placeholder { color: var(--gray-50); }
+.login-btn { background: var(--blue); color: white; border: none; padding: 14px; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.15s; border-radius: 0; }
+.login-btn:hover { background: var(--blue-dark); }
+.login-error { background: #2a1a1a; border: 1px solid var(--red); color: #ff8080; padding: 10px 12px; font-size: 0.82rem; display: none; text-align: center; }
+.login-error.show { display: block; }
+.login-footer { padding: 12px 24px; border-top: 1px solid var(--gray-80); text-align: center; font-size: 0.72rem; color: var(--gray-60); }
+
 /* MOBILE RESPONSIVE */
 @media (max-width: 768px) {
   .topbar-brand { display: none; }
@@ -199,6 +220,35 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-10); col
 </style>
 </head>
 <body>
+
+<!-- TELA DE LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="login-logo">💻</div>
+      <h2>TI_SUPORTE</h2>
+      <p>Acesso restrito à equipe técnica</p>
+    </div>
+    <div class="login-body">
+      <div>
+        <span class="login-label">Técnico</span>
+        <select class="login-select" id="login-tecnico">
+          <option value="">— Selecione seu nome —</option>
+          <option>Emanoel Estagiário</option>
+          <option>Ghabriel Estagiário</option>
+          <option>HermesonTI</option>
+        </select>
+      </div>
+      <div>
+        <span class="login-label">Senha</span>
+        <input class="login-input" type="password" id="login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+      </div>
+      <div class="login-error" id="login-error">❌ Usuário ou senha incorretos.</div>
+      <button class="login-btn" onclick="fazerLogin()">Entrar no Painel →</button>
+    </div>
+    <div class="login-footer">Central de Chamados TI · Acesso interno</div>
+  </div>
+</div>
 
 <div class="topbar">
   <button class="hamburger" onclick="toggleSidebar()">☰</button>
@@ -350,6 +400,37 @@ let editingId = null;
 let currentStatusFilter = '';
 let lastTicketId = null;
 let notifAtivadas = false;
+
+// ===== LOGIN =====
+const SENHAS = {
+  'Emanoel Estagiário': 'emanoel123',
+  'Ghabriel Estagiário': 'ghabriel123',
+  'HermesonTI': 'ohdude2809'
+};
+
+function fazerLogin() {
+  const tecnico = document.getElementById('login-tecnico').value;
+  const senha = document.getElementById('login-senha').value;
+  const erro = document.getElementById('login-error');
+
+  if (!tecnico || !senha) { erro.textContent = '⚠️ Preencha todos os campos.'; erro.classList.add('show'); return; }
+  if (SENHAS[tecnico] !== senha) { erro.textContent = '❌ Usuário ou senha incorretos.'; erro.classList.add('show'); document.getElementById('login-senha').value = ''; return; }
+
+  erro.classList.remove('show');
+  document.getElementById('login-screen').style.display = 'none';
+  sessionStorage.setItem('tecnico-logado', tecnico);
+
+  // Mostra nome do técnico logado na topbar
+  document.getElementById('topbar-page-name').textContent = 'Dashboard — ' + tecnico.split(' ')[0];
+}
+
+function checkLogin() {
+  const logado = sessionStorage.getItem('tecnico-logado');
+  if (logado) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('topbar-page-name').textContent = 'Dashboard — ' + logado.split(' ')[0];
+  }
+}
 
 // ===== SIDEBAR MOBILE =====
 function toggleSidebar() {
@@ -634,6 +715,7 @@ function showToast(msg,type){
 }
 
 // ===== INIT =====
+checkLogin();
 (async()=>{
   await fetchTickets();
   renderDashboard();
