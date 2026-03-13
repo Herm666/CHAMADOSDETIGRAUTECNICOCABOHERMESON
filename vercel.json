@@ -1,8 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/chamados/:id*", "destination": "/api/chamados" },
-    { "source": "/", "destination": "/public/solicitante.html" },
-    { "source": "/tecnico", "destination": "/public/tecnico.html" },
-    { "source": "/solicitante", "destination": "/public/solicitante.html" }
+    { "source": "/api/chamados/:id*", "destination": "/api/chamados" }
   ]
 }
