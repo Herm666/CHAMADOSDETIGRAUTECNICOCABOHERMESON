@@ -1,733 +1,1751 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#161616">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>TI Suporte — Painel Técnico</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💻</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
-  --blue: #0f62fe; --blue-dark: #0043ce; --blue-light: #edf5ff; --blue-mid: #d0e2ff;
-  --green: #198038; --green-light: #defbe6; --green-mid: #a7f0ba;
-  --orange: #b45309; --orange-light: #fff7ed; --orange-mid: #fed7aa;
-  --red: #da1e28; --red-light: #fff1f1;
-  --yellow: #c48000; --yellow-light: #fcf4d6;
-  --gray-10: #f4f4f4; --gray-20: #e0e0e0; --gray-30: #c6c6c6;
-  --gray-50: #8d8d8d; --gray-60: #6f6f6f; --gray-70: #525252;
-  --gray-80: #393939; --gray-90: #262626; --gray-100: #161616;
-  --sidebar-w: 220px; --topbar-h: 52px;
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #181c24;
+  --border: #1e2330;
+  --accent: #00e5ff;
+  --accent2: #7c3aed;
+  --green: #22c55e;
+  --orange: #f97316;
+  --red: #ef4444;
+  --yellow: #eab308;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --sidebar-w: 240px;
 }
-body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-10); color: var(--gray-100); display: flex; flex-direction: column; min-height: 100vh; }
 
-/* TOPBAR */
-.topbar { height: var(--topbar-h); background: var(--gray-100); color: white; display: flex; align-items: center; position: fixed; top: 0; left: 0; right: 0; z-index: 200; }
-.topbar-brand { width: var(--sidebar-w); display: flex; align-items: center; gap: 10px; padding: 0 16px; border-right: 1px solid var(--gray-80); height: 100%; flex-shrink: 0; }
-.brand-icon { background: var(--blue); width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-.brand-name { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 500; line-height: 1.2; }
-.brand-sub { font-size: 0.62rem; color: var(--gray-50); font-family: 'IBM Plex Sans', sans-serif; }
-.topbar-middle { display: flex; align-items: center; gap: 8px; padding: 0 16px; flex: 1; min-width: 0; }
-.topbar-page-name { font-size: 0.82rem; color: white; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-actions { padding-right: 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.topbar-btn { background: var(--blue); border: none; color: white; padding: 7px 12px; cursor: pointer; font-size: 0.75rem; font-family: 'IBM Plex Sans', sans-serif; transition: background 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.topbar-btn:hover { background: var(--blue-dark); }
-.topbar-btn.notif-btn { background: var(--gray-80); }
-.topbar-btn.notif-btn.on { background: var(--green); }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* HAMBURGER (mobile) */
-.hamburger { display: none; background: transparent; border: none; color: white; cursor: pointer; padding: 8px; font-size: 1.3rem; }
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-/* SIDEBAR */
-.sidebar { width: var(--sidebar-w); background: var(--gray-90); position: fixed; top: var(--topbar-h); left: 0; bottom: 0; overflow-y: auto; z-index: 150; display: flex; flex-direction: column; transition: transform 0.25s ease; }
-.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 140; top: var(--topbar-h); }
-.sidebar-section { padding: 8px 0; border-bottom: 1px solid var(--gray-80); }
-.sidebar-section-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-60); padding: 10px 16px 6px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; color: var(--gray-30); cursor: pointer; transition: all 0.15s; font-size: 0.85rem; border-left: 3px solid transparent; user-select: none; }
-.nav-item:hover { background: var(--gray-80); color: white; }
-.nav-item.active { background: #1a1a1a; color: white; border-left-color: var(--blue); }
-.nav-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
-.nav-badge { margin-left: auto; background: var(--blue); color: white; font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; min-width: 20px; text-align: center; flex-shrink: 0; }
-.nav-badge.red { background: var(--red); }
-.nav-badge.orange { background: #d97706; }
-.sidebar-bottom { margin: auto 0 0; padding: 12px 16px; border-top: 1px solid var(--gray-80); background: #1a1a1a; }
-.sidebar-bottom-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-60); margin-bottom: 8px; }
-.tecnico-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.78rem; color: var(--gray-30); }
-.tecnico-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* MAIN */
-.main-content { margin-left: var(--sidebar-w); margin-top: var(--topbar-h); flex: 1; padding: 20px; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-.page-title h1 { font-size: 1.2rem; font-weight: 700; }
-.page-title p { font-size: 0.78rem; color: var(--gray-50); margin-top: 2px; }
+/* ══════════════ LOGIN ══════════════ */
+#loginScreen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  background-image: radial-gradient(ellipse at 30% 20%, rgba(0,229,255,.07) 0%, transparent 60%),
+                    radial-gradient(ellipse at 70% 80%, rgba(124,58,237,.07) 0%, transparent 60%);
+}
 
-/* STATS */
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; margin-bottom: 16px; }
-.stat-card { background: white; border: 1px solid var(--gray-20); padding: 16px; position: relative; overflow: hidden; }
-.stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-.stat-card.blue::before { background: var(--blue); } .stat-card.orange::before { background: #d97706; }
-.stat-card.green::before { background: var(--green); } .stat-card.red::before { background: var(--red); }
-.stat-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-50); font-weight: 600; margin-bottom: 6px; }
-.stat-value { font-size: 1.8rem; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
-.stat-card.blue .stat-value { color: var(--blue); } .stat-card.orange .stat-value { color: #d97706; }
-.stat-card.green .stat-value { color: var(--green); } .stat-card.red .stat-value { color: var(--red); }
-.stat-sub { font-size: 0.65rem; color: var(--gray-50); margin-top: 4px; }
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 60px rgba(0,229,255,.06);
+  animation: fadeUp .5s ease;
+}
 
-/* CHARTS */
-.charts-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin-bottom: 16px; }
-.chart-card { background: white; border: 1px solid var(--gray-20); padding: 16px; }
-.chart-card-title { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--gray-70); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--gray-20); }
-.bar-chart { display: flex; flex-direction: column; gap: 8px; }
-.bar-row { display: flex; align-items: center; gap: 8px; }
-.bar-label { font-size: 0.7rem; color: var(--gray-70); min-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bar-track { flex: 1; height: 12px; background: var(--gray-10); border: 1px solid var(--gray-20); overflow: hidden; }
-.bar-fill { height: 100%; background: var(--blue); transition: width 0.6s ease; }
-.bar-fill.orange { background: #d97706; } .bar-fill.green { background: var(--green); }
-.bar-count { font-size: 0.68rem; font-family: 'IBM Plex Mono', monospace; color: var(--gray-70); min-width: 16px; text-align: right; }
-.donut-wrap { display: flex; align-items: center; gap: 12px; }
-.donut-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; }
-.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-.legend-name { flex: 1; color: var(--gray-70); } .legend-val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-/* FILTERS */
-.filters-bar { background: white; border: 1px solid var(--gray-20); padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 2px; }
-.filter-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-50); }
-.filter-select { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.82rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 6px 8px; color: var(--gray-100); outline: none; cursor: pointer; border-radius: 0; -webkit-appearance: none; }
-.filter-select:focus { border-color: var(--blue); }
-.filter-search { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.82rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 6px 10px; color: var(--gray-100); outline: none; flex: 1; min-width: 140px; border-radius: 0; }
-.filter-search:focus { border-color: var(--blue); background: var(--blue-light); }
-.btn-clear { font-size: 0.75rem; background: transparent; border: 1px solid var(--gray-30); padding: 6px 10px; cursor: pointer; color: var(--gray-70); font-family: 'IBM Plex Sans', sans-serif; transition: all 0.15s; }
-.btn-clear:hover { border-color: var(--blue); color: var(--blue); }
+.login-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .15em;
+  margin-bottom: 8px;
+}
+.login-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 36px;
+}
 
-/* TABLE */
-.tickets-table-wrap { background: white; border: 1px solid var(--gray-20); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.tickets-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 600px; }
-.tickets-table th { background: var(--gray-90); color: white; text-align: left; padding: 10px 12px; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; white-space: nowrap; }
-.tickets-table td { padding: 11px 12px; border-bottom: 1px solid var(--gray-20); vertical-align: middle; }
-.tickets-table tr:last-child td { border-bottom: none; }
-.tickets-table tr:hover td { background: #fafafa; }
-.tid { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--blue); font-weight: 500; }
-.t-assunto { font-weight: 600; max-width: 200px; }
-.t-assunto small { display: block; font-weight: 400; color: var(--gray-50); font-size: 0.68rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-.t-nome { color: var(--gray-70); white-space: nowrap; }
-.t-setor { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 2px 7px; font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
-.badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
-.badge-aberto { background: var(--blue-light); color: var(--blue); border: 1px solid var(--blue-mid); }
-.badge-atendimento { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange-mid); }
-.badge-concluido { background: var(--green-light); color: var(--green); border: 1px solid var(--green-mid); }
-.badge-alta { background: var(--red-light); color: var(--red); } .badge-media { background: var(--yellow-light); color: var(--yellow); } .badge-baixa { background: var(--green-light); color: var(--green); }
-.table-select { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.75rem; background: var(--gray-10); border: 1px solid var(--gray-20); padding: 5px 6px; color: var(--gray-100); outline: none; cursor: pointer; width: 100%; transition: border-color 0.15s; border-radius: 0; -webkit-appearance: none; }
-.table-select:focus { border-color: var(--blue); }
-.empty-row td { text-align: center; padding: 48px 20px; color: var(--gray-50); }
-.empty-icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.4; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: .08em; text-transform: uppercase; }
+.field select, .field input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.field select:focus, .field input:focus { border-color: var(--accent); }
+.field select option { background: var(--surface2); }
 
-/* VIEW TOGGLE */
-.view-toggle { display: flex; }
-.vt-btn { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 7px 12px; cursor: pointer; font-size: 0.78rem; color: var(--gray-70); transition: all 0.15s; font-family: 'IBM Plex Sans', sans-serif; }
-.vt-btn.active { background: var(--blue); border-color: var(--blue); color: white; }
-.vt-btn:not(:last-child) { border-right: none; }
+.btn-login {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0c10;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: .05em;
+  border: none;
+  border-radius: 8px;
+  padding: 13px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity .2s, transform .1s;
+}
+.btn-login:hover { opacity: .9; }
+.btn-login:active { transform: scale(.98); }
 
-/* KANBAN */
-.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.kanban-col { background: var(--gray-10); border: 1px solid var(--gray-20); }
-.kanban-col-header { padding: 10px 14px; border-bottom: 1px solid var(--gray-20); display: flex; align-items: center; justify-content: space-between; background: white; }
-.kanban-col-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-.kanban-count { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; background: var(--gray-20); padding: 2px 7px; border-radius: 10px; }
-.kanban-cards { padding: 6px; display: flex; flex-direction: column; gap: 6px; min-height: 50px; }
-.kanban-card { background: white; border: 1px solid var(--gray-20); border-left: 3px solid var(--blue); padding: 10px; cursor: pointer; transition: all 0.15s; }
-.kanban-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); transform: translateY(-1px); }
-.kanban-card.k-orange { border-left-color: #d97706; } .kanban-card.k-green { border-left-color: var(--green); }
-.kc-assunto { font-size: 0.78rem; font-weight: 600; margin-bottom: 5px; }
-.kc-meta { font-size: 0.68rem; color: var(--gray-50); display: flex; flex-wrap: wrap; gap: 5px; }
+.login-error {
+  display: none;
+  background: rgba(239,68,68,.1);
+  border: 1px solid rgba(239,68,68,.3);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-top: 12px;
+  text-align: center;
+}
 
-/* MODAL */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: flex-start; justify-content: flex-end; padding-top: var(--topbar-h); }
+/* ══════════════ APP SHELL ══════════════ */
+#app { display: none; flex-direction: row; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform .3s;
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: .15em;
+}
+.sidebar-logo .logo-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+.nav-section { margin-bottom: 24px; }
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .18s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(0,229,255,.1); color: var(--accent); }
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: #0a0c10;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+.nav-item .badge.orange { background: var(--orange); color: #fff; }
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-user-avatar {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.sidebar-user-name { font-size: 13px; font-weight: 600; flex: 1; }
+.sidebar-user-role { font-size: 11px; color: var(--muted); }
+.btn-logout {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 16px; padding: 4px; border-radius: 6px; transition: color .2s;
+}
+.btn-logout:hover { color: var(--red); }
+
+/* ── MAIN ── */
+.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 16px; font-weight: 700; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.btn-icon {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all .18s;
+  position: relative;
+  text-decoration: none;
+}
+.btn-icon:hover { border-color: var(--accent); }
+.btn-icon .notif-dot {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 7px; height: 7px;
+  background: var(--red);
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  display: none;
+}
+.btn-icon .notif-dot.visible { display: block; }
+
+/* ── PAGE CONTENT ── */
+.page { display: none; padding: 28px; }
+.page.active { display: block; }
+
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 24px; font-weight: 800; }
+.page-header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* ── CARDS ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.stat-card:hover { border-color: var(--accent); }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+.stat-card.blue::before { background: var(--accent); }
+.stat-card.orange::before { background: var(--orange); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.purple::before { background: var(--accent2); }
+
+.stat-icon { font-size: 22px; margin-bottom: 12px; }
+.stat-value { font-size: 32px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* ── CHARTS ROW ── */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.chart-card h3 { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px; }
+.chart-wrap { position: relative; height: 160px; }
+
+/* ── TABLE ── */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table-toolbar {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.table-toolbar h3 { font-size: 15px; font-weight: 700; flex: 1; min-width: 120px; }
+.search-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  outline: none;
+  width: 200px;
+  transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.filter-select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--accent); }
+.filter-select option { background: var(--surface2); }
+
+.btn-export {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+  white-space: nowrap;
+}
+.btn-export:hover { border-color: var(--green); color: var(--green); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  background: var(--surface2);
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+th:hover { color: var(--text); }
+th .sort-icon { margin-left: 4px; opacity: .4; }
+td {
+  padding: 13px 16px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:hover td { background: var(--surface2); }
+
+/* BADGES */
+.badge-status, .badge-pri {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge-status.aberto { background: rgba(0,229,255,.12); color: var(--accent); }
+.badge-status.atendimento { background: rgba(249,115,22,.12); color: var(--orange); }
+.badge-status.concluido { background: rgba(34,197,94,.12); color: var(--green); }
+.badge-pri.alta { background: rgba(239,68,68,.12); color: var(--red); }
+.badge-pri.media { background: rgba(234,179,8,.12); color: var(--yellow); }
+.badge-pri.baixa { background: rgba(34,197,94,.12); color: var(--green); }
+
+.btn-open-chamado {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+.btn-open-chamado:hover { border-color: var(--accent); color: var(--accent); }
+
+/* PAGINATION */
+.pagination {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pagination-btns { display: flex; gap: 6px; }
+.btn-page {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-page:hover { border-color: var(--accent); }
+.btn-page.active { background: var(--accent); color: #0a0c10; border-color: var(--accent); }
+.btn-page:disabled { opacity: .3; cursor: default; }
+
+/* EMPTY STATE */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ── KANBAN ── */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  min-height: 400px;
+}
+.kanban-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.kanban-col-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.kanban-col-count {
+  margin-left: auto;
+  background: var(--surface2);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.kanban-cards { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
+.kanban-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all .18s;
+  border-left: 3px solid transparent;
+}
+.kanban-card:hover { border-color: var(--accent); }
+.kanban-card.alta { border-left-color: var(--red); }
+.kanban-card.media { border-left-color: var(--yellow); }
+.kanban-card.baixa { border-left-color: var(--green); }
+.kcard-id { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+.kcard-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.kcard-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.kcard-tag { font-size: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; color: var(--muted); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 16px;
+}
 .modal-overlay.open { display: flex; }
-.modal-panel { background: white; width: 460px; max-width: 100%; height: calc(100vh - var(--topbar-h)); overflow-y: auto; display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,0.2); animation: slideIn 0.2s ease; }
-@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
-.modal-header { background: var(--gray-90); color: white; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-.modal-header h3 { font-size: 0.88rem; font-weight: 700; }
-.modal-id { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--gray-50); }
-.modal-close { background: transparent; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
-.modal-close:hover { background: var(--gray-80); }
-.modal-body { padding: 18px; flex: 1; }
-.modal-section { margin-bottom: 18px; }
-.modal-section-title { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gray-50); font-weight: 700; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--gray-20); }
-.modal-field { margin-bottom: 10px; }
-.modal-field label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-50); font-weight: 600; display: block; margin-bottom: 3px; }
-.modal-field .val { font-size: 0.85rem; color: var(--gray-100); }
-.modal-desc { background: var(--gray-10); border: 1px solid var(--gray-20); padding: 10px; font-size: 0.82rem; line-height: 1.6; color: var(--gray-70); white-space: pre-wrap; }
-.modal-select-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-70); font-weight: 600; margin-bottom: 4px; display: block; }
-.modal-select { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; background: var(--gray-10); border: none; border-bottom: 2px solid var(--gray-30); padding: 12px 12px; color: var(--gray-100); outline: none; cursor: pointer; transition: border-color 0.15s; border-radius: 0; -webkit-appearance: none; }
-.modal-select:focus { border-bottom-color: var(--blue); background: var(--blue-light); }
-.modal-controls { display: flex; flex-direction: column; gap: 10px; }
-.btn-save { background: var(--blue); color: white; border: none; padding: 14px 24px; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.15s; margin-top: 8px; border-radius: 0; }
-.btn-save:hover { background: var(--blue-dark); }
-.btn-save:disabled { background: var(--gray-30); cursor: not-allowed; }
+.modal-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  animation: slideIn .25s ease;
+  box-shadow: -20px 0 60px rgba(0,0,0,.4);
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 
-/* NOTIF BANNER */
-.notif-banner { background: #1a2a1a; border: 1px solid var(--green); border-left: 4px solid var(--green); padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; border-radius: 0; }
-.notif-banner p { font-size: 0.82rem; color: var(--green-light); flex: 1; }
-.notif-banner button { background: var(--green); border: none; color: white; padding: 7px 14px; cursor: pointer; font-family: 'IBM Plex Sans', sans-serif; font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.modal-header h2 { font-size: 17px; font-weight: 800; flex: 1; }
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+  transition: color .18s;
+}
+.btn-close-modal:hover { color: var(--text); }
 
-/* TOAST */
-.toast { position: fixed; bottom: 20px; left: 16px; right: 16px; max-width: 380px; margin: 0 auto; background: var(--gray-90); color: white; padding: 12px 18px; font-size: 0.85rem; font-weight: 500; z-index: 9999; transform: translateY(80px); opacity: 0; transition: all 0.25s; border-left: 4px solid var(--blue); text-align: center; }
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.green { border-left-color: var(--green); }
-.toast.red { border-left-color: var(--red); }
+.modal-body { padding: 24px; }
+.info-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.info-block { flex: 1; }
+.info-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+.info-value { font-size: 13px; font-weight: 600; }
 
-/* LOGIN */
-.login-screen { position: fixed; inset: 0; background: var(--gray-100); display: flex; align-items: center; justify-content: center; z-index: 9000; padding: 20px; }
-.login-box { background: var(--gray-90); border: 1px solid var(--gray-80); width: 100%; max-width: 380px; }
-.login-header { background: var(--gray-100); border-bottom: 1px solid var(--gray-80); padding: 24px; text-align: center; }
-.login-logo { background: var(--blue); width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px; }
-.login-header h2 { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; color: white; font-weight: 500; }
-.login-header p { font-size: 0.75rem; color: var(--gray-50); margin-top: 4px; }
-.login-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-.login-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-30); display: block; margin-bottom: 6px; }
-.login-select { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; background: var(--gray-80); border: none; border-bottom: 2px solid var(--gray-60); padding: 12px; color: white; outline: none; cursor: pointer; -webkit-appearance: none; border-radius: 0; transition: border-color 0.15s; }
-.login-select:focus { border-bottom-color: var(--blue); background: #1a2a4a; }
-.login-select option { background: var(--gray-90); }
-.login-input { width: 100%; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; background: var(--gray-80); border: none; border-bottom: 2px solid var(--gray-60); padding: 12px; color: white; outline: none; border-radius: 0; transition: border-color 0.15s; }
-.login-input:focus { border-bottom-color: var(--blue); background: #1a2a4a; }
-.login-input::placeholder { color: var(--gray-50); }
-.login-btn { background: var(--blue); color: white; border: none; padding: 14px; font-family: 'IBM Plex Sans', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; transition: background 0.15s; border-radius: 0; }
-.login-btn:hover { background: var(--blue-dark); }
-.login-error { background: #2a1a1a; border: 1px solid var(--red); color: #ff8080; padding: 10px 12px; font-size: 0.82rem; display: none; text-align: center; }
-.login-error.show { display: block; }
-.login-footer { padding: 12px 24px; border-top: 1px solid var(--gray-80); text-align: center; font-size: 0.72rem; color: var(--gray-60); }
+.descricao-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 20px;
+  min-height: 60px;
+}
 
-/* MOBILE RESPONSIVE */
-@media (max-width: 768px) {
-  .topbar-brand { display: none; }
-  .hamburger { display: flex; }
+.modal-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.modal-field select, .modal-field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.modal-field select:focus, .modal-field textarea:focus { border-color: var(--accent); }
+.modal-field select option { background: var(--surface2); }
+.modal-field textarea { resize: vertical; min-height: 80px; }
+
+.btn-save {
+  width: 100%;
+  background: var(--accent);
+  color: #0a0c10;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: opacity .2s;
+  margin-top: 4px;
+}
+.btn-save:hover { opacity: .9; }
+
+/* HISTÓRICO */
+.history-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.history-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-size: 12px;
+  color: var(--muted);
+}
+.history-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.history-text { flex: 1; }
+.history-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap; }
+
+/* NOTAS */
+.notes-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.note-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.note-meta { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.note-text { color: var(--text); line-height: 1.5; }
+
+/* ── NOTIFICAÇÕES ── */
+.notif-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.4);
+  z-index: 200;
+  overflow: hidden;
+}
+.notif-dropdown.open { display: block; }
+.notif-header { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+.notif-list { max-height: 300px; overflow-y: auto; }
+.notif-item { padding: 13px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+.notif-item:hover { background: var(--surface2); }
+.notif-item:last-child { border-bottom: none; }
+.notif-item.unread { border-left: 3px solid var(--accent); }
+.notif-item-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.notif-item-sub { font-size: 11px; color: var(--muted); }
+
+/* ── EQUIPE PAGE ── */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.team-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: border-color .2s;
+}
+.team-card:hover { border-color: var(--accent); }
+.team-avatar {
+  width: 64px; height: 64px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700;
+  margin: 0 auto 16px;
+  color: #fff;
+}
+.team-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.team-role { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.team-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.team-stat { background: var(--surface2); border-radius: 8px; padding: 12px; }
+.team-stat-val { font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.team-stat-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  animation: toastIn .3s ease;
+  max-width: 300px;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.toast.success { border-left: 3px solid var(--green); }
+.toast.error { border-left: 3px solid var(--red); }
+.toast.info { border-left: 3px solid var(--accent); }
+
+/* ── TABS (lista/kanban) ── */
+.view-tabs { display: flex; gap: 4px; }
+.view-tab {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+}
+.view-tab.active { background: var(--accent); color: #0a0c10; border-color: var(--accent); }
+
+/* ── SLA INDICATORS ── */
+.sla-ok { color: var(--green); font-size: 11px; }
+.sla-warn { color: var(--yellow); font-size: 11px; }
+.sla-late { color: var(--red); font-size: 11px; }
+
+/* ── MOBILE ── */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
   .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-overlay.open { display: block; }
-  .main-content { margin-left: 0; }
-  .modal-panel { width: 100%; }
-  .kanban-board { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .hamburger { display: flex; }
   .charts-row { grid-template-columns: 1fr; }
-  .topbar-middle { padding: 0 12px; }
+  .kanban-board { grid-template-columns: 1fr; }
 }
-@media (max-width: 480px) {
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .topbar-btn span { display: none; }
+@media (max-width: 600px) {
+  .cards-grid { grid-template-columns: 1fr 1fr; }
+  .modal-panel { max-width: 100%; }
 }
+
+/* ── PORTAL BTN ── */
+.btn-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(124,58,237,.15);
+  border: 1px solid rgba(124,58,237,.3);
+  color: #a78bfa;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all .18s;
+}
+.btn-portal:hover { background: rgba(124,58,237,.25); }
+
+/* ── MOBILE OVERLAY ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 99;
+}
+.sidebar-overlay.open { display: block; }
 </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
-<div class="login-screen" id="login-screen">
-  <div class="login-box">
-    <div class="login-header">
-      <div class="login-logo">💻</div>
-      <h2>TI_SUPORTE</h2>
-      <p>Acesso restrito à equipe técnica</p>
+<!-- ══ LOGIN ══ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">💻 TI_SUPORTE</div>
+    <h1 class="login-title">Painel Técnico</h1>
+    <p class="login-sub">Acesso restrito à equipe técnica</p>
+    <div class="field">
+      <label>Técnico</label>
+      <select id="loginUser">
+        <option value="">— Selecione seu nome —</option>
+        <option value="Emanoel">Emanoel Estagiário</option>
+        <option value="Ghabriel">Ghabriel Estagiário</option>
+        <option value="HermesonTI">HermesonTI</option>
+      </select>
     </div>
-    <div class="login-body">
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="loginPass" placeholder="••••••••" />
+    </div>
+    <button class="btn-login" onclick="doLogin()">Entrar no Painel →</button>
+    <div class="login-error" id="loginError">❌ Usuário ou senha incorretos.</div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-label">💻 TI_SUPORTE</div>
+      <div class="logo-title">Painel Técnico</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Visão Geral</div>
+        <button class="nav-item active" onclick="goPage('dashboard', this)">📊 Dashboard</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Chamados</div>
+        <button class="nav-item" onclick="goPage('chamados', this)">📋 Todos <span class="badge" id="badgeTotal">0</span></button>
+        <button class="nav-item" onclick="goPage('chamados', this, 'Aberto')">🔵 Abertos <span class="badge" id="badgeAberto">0</span></button>
+        <button class="nav-item" onclick="goPage('chamados', this, 'Em Atendimento')">🟠 Em Atendimento <span class="badge orange" id="badgeAtend">0</span></button>
+        <button class="nav-item" onclick="goPage('chamados', this, 'Concluído')">✅ Concluídos</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Por Técnico</div>
+        <button class="nav-item" onclick="goPage('chamados', this); filterByTecnico('Emanoel')">👤 Emanoel</button>
+        <button class="nav-item" onclick="goPage('chamados', this); filterByTecnico('Ghabriel')">👤 Ghabriel</button>
+        <button class="nav-item" onclick="goPage('chamados', this); filterByTecnico('HermesonTI')">👤 HermesonTI</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Relatórios</div>
+        <button class="nav-item" onclick="goPage('equipe', this)">👥 Equipe</button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-avatar" id="userAvatar">H</div>
       <div>
-        <span class="login-label">Técnico</span>
-        <select class="login-select" id="login-tecnico">
-          <option value="">— Selecione seu nome —</option>
-          <option>Emanoel Estagiário</option>
-          <option>Ghabriel Estagiário</option>
-          <option>HermesonTI</option>
+        <div class="sidebar-user-name" id="userName">—</div>
+        <div class="sidebar-user-role">Técnico TI</div>
+      </div>
+      <button class="btn-logout" title="Sair" onclick="doLogout()">⎋</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="openSidebar()">☰</button>
+        <span class="topbar-title" id="topbarTitle">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <a href="solicitante.html" class="btn-portal">📤 Portal</a>
+        <div style="position:relative;">
+          <button class="btn-icon" id="notifBtn" onclick="toggleNotif()">
+            🔔
+            <span class="notif-dot" id="notifDot"></span>
+          </button>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-header">Notificações <span id="notifUnreadCount"></span></div>
+            <div class="notif-list" id="notifList">
+              <div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma notificação</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div style="padding:28px;">
+        <div class="page-header">
+          <h1>Dashboard</h1>
+          <p>Visão geral em tempo real — <span id="dashDate"></span></p>
+        </div>
+        <div class="cards-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total</div>
+            <div class="stat-sub">registros</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon">🔵</div>
+            <div class="stat-value" id="statAberto">0</div>
+            <div class="stat-label">Abertos</div>
+            <div class="stat-sub">aguardando</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon">🟠</div>
+            <div class="stat-value" id="statAtend">0</div>
+            <div class="stat-label">Atendimento</div>
+            <div class="stat-sub">em progresso</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="statConc">0</div>
+            <div class="stat-label">Concluídos</div>
+            <div class="stat-sub">resolvidos</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">🚨</div>
+            <div class="stat-value" id="statAlta">0</div>
+            <div class="stat-label">Alta Prior.</div>
+            <div class="stat-sub">críticos</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">⏱</div>
+            <div class="stat-value" id="statSemTec">0</div>
+            <div class="stat-label">Sem Técnico</div>
+            <div class="stat-sub">sem atribuição</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3>Por Setor</h3>
+            <div class="chart-wrap"><canvas id="chartSetor"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Por Técnico</h3>
+            <div class="chart-wrap"><canvas id="chartTecnico"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3>Por Prioridade</h3>
+            <div class="chart-wrap"><canvas id="chartPrioridade"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Recent table -->
+        <div class="table-card">
+          <div class="table-toolbar">
+            <h3>Chamados Recentes</h3>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Assunto</th><th>Solicitante</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Técnico</th><th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="dashTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAMADOS -->
+    <div class="page" id="page-chamados">
+      <div style="padding:28px;">
+        <div class="page-header">
+          <h1>Chamados</h1>
+          <p>Gerencie e acompanhe todos os atendimentos</p>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <h3>Lista de Chamados</h3>
+            <div class="view-tabs">
+              <button class="view-tab active" onclick="setView('lista', this)">☰ Lista</button>
+              <button class="view-tab" onclick="setView('kanban', this)">⊞ Kanban</button>
+            </div>
+            <input class="search-input" type="text" id="searchInput" placeholder="🔍 Buscar..." oninput="renderChamados()">
+            <select class="filter-select" id="filterStatus" onchange="renderChamados()">
+              <option value="">Todos os status</option>
+              <option>Aberto</option>
+              <option>Em Atendimento</option>
+              <option>Concluído</option>
+            </select>
+            <select class="filter-select" id="filterSetor" onchange="renderChamados()">
+              <option value="">Todos os setores</option>
+              <option>Comercial</option><option>CRA</option><option>Estágio</option>
+              <option>Pedagógico</option><option>Secretaria ADM</option>
+            </select>
+            <select class="filter-select" id="filterPri" onchange="renderChamados()">
+              <option value="">Todas as prioridades</option>
+              <option>Alta</option><option>Média</option><option>Baixa</option>
+            </select>
+            <select class="filter-select" id="filterTec" onchange="renderChamados()">
+              <option value="">Todos os técnicos</option>
+              <option>Emanoel</option><option>Ghabriel</option><option>HermesonTI</option><option value="sem">Sem técnico</option>
+            </select>
+            <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+          </div>
+
+          <!-- LISTA VIEW -->
+          <div id="listView">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th onclick="sortTable('id')">ID <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('assunto')">Assunto <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('solicitante')">Solicitante <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('setor')">Setor <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('prioridade')">Prioridade <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('status')">Status <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('tecnico')">Técnico <span class="sort-icon">↕</span></th>
+                    <th onclick="sortTable('data')">Data <span class="sort-icon">↕</span></th>
+                    <th>SLA</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="chamadosTable"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="paginationBar">
+              <span id="paginationInfo"></span>
+              <div class="pagination-btns" id="paginationBtns"></div>
+            </div>
+          </div>
+
+          <!-- KANBAN VIEW -->
+          <div id="kanbanView" style="display:none; padding:16px;">
+            <div class="kanban-board">
+              <div class="kanban-col">
+                <div class="kanban-col-header" style="border-top:3px solid var(--accent);">🔵 Aberto <span class="kanban-col-count" id="kAberto">0</span></div>
+                <div class="kanban-cards" id="kColAberto"></div>
+              </div>
+              <div class="kanban-col">
+                <div class="kanban-col-header" style="border-top:3px solid var(--orange);">🟠 Em Atendimento <span class="kanban-col-count" id="kAtend">0</span></div>
+                <div class="kanban-cards" id="kColAtend"></div>
+              </div>
+              <div class="kanban-col">
+                <div class="kanban-col-header" style="border-top:3px solid var(--green);">✅ Concluído <span class="kanban-col-count" id="kConc">0</span></div>
+                <div class="kanban-cards" id="kColConc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPE -->
+    <div class="page" id="page-equipe">
+      <div style="padding:28px;">
+        <div class="page-header">
+          <h1>Equipe</h1>
+          <p>Performance individual dos técnicos</p>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CHAMADO -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalIfBg(event)">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 id="modalId">#0000</h2>
+      <span id="modalStatusBadge"></span>
+      <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-row">
+        <div class="info-block"><div class="info-label">Solicitante</div><div class="info-value" id="mSolicitante">—</div></div>
+        <div class="info-block"><div class="info-label">Setor</div><div class="info-value" id="mSetor">—</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-block"><div class="info-label">Data de abertura</div><div class="info-value" id="mData">—</div></div>
+        <div class="info-block"><div class="info-label">Prioridade</div><div class="info-value" id="mPrioridade">—</div></div>
+      </div>
+      <div class="modal-section-title">Descrição</div>
+      <div class="descricao-box" id="mDescricao">Sem descrição.</div>
+
+      <div class="modal-section-title">Histórico</div>
+      <div class="history-list" id="mHistorico"></div>
+
+      <div class="modal-section-title">Notas Internas</div>
+      <div class="notes-list" id="mNotesList"></div>
+      <div class="modal-field">
+        <label>Adicionar nota interna</label>
+        <textarea id="noteInput" placeholder="Anotações visíveis apenas para a equipe técnica..."></textarea>
+      </div>
+      <button class="btn-save" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);margin-bottom:16px;" onclick="addNote()">+ Adicionar Nota</button>
+
+      <div class="modal-section-title">Atendimento</div>
+      <div class="modal-field">
+        <label>Técnico responsável</label>
+        <select id="mTecnico">
+          <option value="">— Sem técnico —</option>
+          <option>Emanoel</option><option>Ghabriel</option><option>HermesonTI</option>
         </select>
       </div>
-      <div>
-        <span class="login-label">Senha</span>
-        <input class="login-input" type="password" id="login-senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()">
+      <div class="modal-field">
+        <label>Status</label>
+        <select id="mStatus">
+          <option>Aberto</option>
+          <option>Em Atendimento</option>
+          <option>Concluído</option>
+        </select>
       </div>
-      <div class="login-error" id="login-error">❌ Usuário ou senha incorretos.</div>
-      <button class="login-btn" onclick="fazerLogin()">Entrar no Painel →</button>
-    </div>
-    <div class="login-footer">Central de Chamados TI · Acesso interno</div>
-  </div>
-</div>
-
-<div class="topbar">
-  <button class="hamburger" onclick="toggleSidebar()">☰</button>
-  <div class="topbar-brand">
-    <div class="brand-icon">💻</div>
-    <div><div class="brand-name">TI_SUPORTE</div><div class="brand-sub">Painel Técnico</div></div>
-  </div>
-  <div class="topbar-middle">
-    <span class="topbar-page-name" id="topbar-page-name">Dashboard</span>
-  </div>
-  <div class="topbar-actions">
-    <button class="topbar-btn notif-btn" id="notif-btn" onclick="toggleNotificacoes()">🔔 <span>Notificações</span></button>
-    <a href="/solicitante.html" class="topbar-btn">📤 <span>Portal</span></a>
-  </div>
-</div>
-
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-
-<div class="sidebar" id="sidebar">
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Visão Geral</div>
-    <div class="nav-item active" onclick="showView('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Chamados</div>
-    <div class="nav-item" onclick="showView('todos',this)"><span class="nav-icon">📋</span> Todos <span class="nav-badge" id="badge-todos">0</span></div>
-    <div class="nav-item" onclick="showView('abertos',this)"><span class="nav-icon">🔵</span> Abertos <span class="nav-badge red" id="badge-abertos">0</span></div>
-    <div class="nav-item" onclick="showView('andamento',this)"><span class="nav-icon">🟠</span> Em Atendimento <span class="nav-badge orange" id="badge-andamento">0</span></div>
-    <div class="nav-item" onclick="showView('concluidos',this)"><span class="nav-icon">✅</span> Concluídos</div>
-  </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">Por Técnico</div>
-    <div class="nav-item" onclick="filterTecnico('Emanoel Estagiário',this)"><span class="nav-icon">👤</span> Emanoel</div>
-    <div class="nav-item" onclick="filterTecnico('Ghabriel Estagiário',this)"><span class="nav-icon">👤</span> Ghabriel</div>
-    <div class="nav-item" onclick="filterTecnico('HermesonTI',this)"><span class="nav-icon">👤</span> HermesonTI</div>
-  </div>
-  <div class="sidebar-bottom">
-    <div class="sidebar-bottom-label">Equipe</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> Emanoel Estagiário</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> Ghabriel Estagiário</div>
-    <div class="tecnico-item"><span class="tecnico-dot"></span> HermesonTI</div>
-  </div>
-</div>
-
-<div class="main-content">
-
-  <!-- DASHBOARD -->
-  <div id="view-dashboard">
-    <div id="notif-banner" class="notif-banner" style="display:none">
-      <p>🔔 Ative as notificações para ser avisado quando chegar um novo chamado.</p>
-      <button onclick="pedirPermissao()">Ativar agora</button>
-    </div>
-    <div class="page-header">
-      <div class="page-title"><h1>Dashboard</h1><p>Visão geral em tempo real</p></div>
-    </div>
-    <div class="stats-row">
-      <div class="stat-card blue"><div class="stat-label">Total</div><div class="stat-value" id="ds-total">0</div><div class="stat-sub">registros</div></div>
-      <div class="stat-card red"><div class="stat-label">Abertos</div><div class="stat-value" id="ds-abertos">0</div><div class="stat-sub">aguardando</div></div>
-      <div class="stat-card orange"><div class="stat-label">Atendimento</div><div class="stat-value" id="ds-andamento">0</div><div class="stat-sub">em progresso</div></div>
-      <div class="stat-card green"><div class="stat-label">Concluídos</div><div class="stat-value" id="ds-concluidos">0</div><div class="stat-sub">resolvidos</div></div>
-    </div>
-    <div class="charts-row">
-      <div class="chart-card"><div class="chart-card-title">Por Setor</div><div class="bar-chart" id="chart-setor"></div></div>
-      <div class="chart-card"><div class="chart-card-title">Por Técnico</div><div class="bar-chart" id="chart-tecnico"></div></div>
-      <div class="chart-card"><div class="chart-card-title">Por Prioridade</div>
-        <div class="donut-wrap">
-          <svg width="90" height="90" viewBox="0 0 100 100" id="donut-svg"><circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/></svg>
-          <div class="donut-legend" id="donut-legend"></div>
-        </div>
-      </div>
-    </div>
-    <div class="tickets-table-wrap">
-      <table class="tickets-table">
-        <thead><tr><th>ID</th><th>Assunto</th><th>Solicitante</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Técnico</th><th>Data</th></tr></thead>
-        <tbody id="table-dashboard-body"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- TICKETS VIEW -->
-  <div id="view-tickets" style="display:none;">
-    <div class="page-header">
-      <div class="page-title"><h1 id="tickets-view-title">Chamados</h1><p id="tickets-view-sub"></p></div>
-      <div class="view-toggle">
-        <button class="vt-btn active" onclick="setTicketsView('table',this)">☰ Lista</button>
-        <button class="vt-btn" onclick="setTicketsView('kanban',this)">⊞ Kanban</button>
-      </div>
-    </div>
-    <div class="filters-bar">
-      <input class="filter-search" id="search-input" placeholder="🔍 Buscar..." oninput="renderTicketsView()">
-      <select class="filter-select" id="f-status" onchange="renderTicketsView()"><option value="">Todos os status</option><option>Aberto</option><option>Em Atendimento</option><option>Concluído</option></select>
-      <select class="filter-select" id="f-setor" onchange="renderTicketsView()"><option value="">Todos setores</option><option>Comercial</option><option>CRA</option><option>Estágio</option><option>Pedagógico</option><option>Secretaria ADM</option></select>
-      <select class="filter-select" id="f-prio" onchange="renderTicketsView()"><option value="">Todas prioridades</option><option>Alta</option><option>Média</option><option>Baixa</option></select>
-      <select class="filter-select" id="f-tecnico" onchange="renderTicketsView()"><option value="">Todos técnicos</option><option>Emanoel Estagiário</option><option>Ghabriel Estagiário</option><option>HermesonTI</option><option value="__sem__">Sem técnico</option></select>
-      <button class="btn-clear" onclick="clearFilters()">✕</button>
-    </div>
-    <div id="table-view">
-      <div class="tickets-table-wrap">
-        <table class="tickets-table">
-          <thead><tr><th>ID</th><th>Assunto</th><th>Solicitante</th><th>Setor</th><th>Prioridade</th><th>Status</th><th>Técnico</th><th>Data</th><th></th></tr></thead>
-          <tbody id="tickets-table-body"></tbody>
-        </table>
-      </div>
-    </div>
-    <div id="kanban-view" style="display:none;">
-      <div class="kanban-board">
-        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid var(--blue)"><span class="kanban-col-title" style="color:var(--blue)">🔵 Aberto</span><span class="kanban-count" id="kc-aberto">0</span></div><div class="kanban-cards" id="kanban-aberto"></div></div>
-        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid #d97706"><span class="kanban-col-title" style="color:#d97706">🟠 Atendimento</span><span class="kanban-count" id="kc-atendimento">0</span></div><div class="kanban-cards" id="kanban-atendimento"></div></div>
-        <div class="kanban-col"><div class="kanban-col-header" style="border-top:3px solid var(--green)"><span class="kanban-col-title" style="color:var(--green)">✅ Concluído</span><span class="kanban-count" id="kc-concluido">0</span></div><div class="kanban-cards" id="kanban-concluido"></div></div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- end main-content -->
-
-<!-- MODAL -->
-<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
-  <div class="modal-panel">
-    <div class="modal-header"><div><div class="modal-id" id="modal-id">#0001</div><h3 id="modal-title">—</h3></div><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="modal-body">
-      <div class="modal-section"><div class="modal-section-title">Informações</div>
-        <div class="modal-field"><label>Solicitante</label><div class="val" id="modal-nome">—</div></div>
-        <div class="modal-field"><label>Setor</label><div class="val" id="modal-setor">—</div></div>
-        <div class="modal-field"><label>Data de abertura</label><div class="val" id="modal-data">—</div></div>
-        <div class="modal-field"><label>Prioridade</label><div class="val" id="modal-prio">—</div></div>
-      </div>
-      <div class="modal-section"><div class="modal-section-title">Descrição</div><div class="modal-desc" id="modal-desc">Sem descrição.</div></div>
-      <div class="modal-section"><div class="modal-section-title">Atendimento</div>
-        <div class="modal-controls">
-          <div><span class="modal-select-label">Técnico responsável</span>
-            <select class="modal-select" id="modal-tecnico-sel"><option value="">— Sem técnico —</option><option>Emanoel Estagiário</option><option>Ghabriel Estagiário</option><option>HermesonTI</option></select>
-          </div>
-          <div><span class="modal-select-label">Status</span>
-            <select class="modal-select" id="modal-status-sel"><option>Aberto</option><option>Em Atendimento</option><option>Concluído</option></select>
-          </div>
-          <button class="btn-save" id="btn-save-modal" onclick="saveModal()">💾 Salvar Alterações</button>
-        </div>
-      </div>
+      <button class="btn-save" onclick="saveChamado()">💾 Salvar Alterações</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- TOASTS -->
+<div class="toast-container" id="toastContainer"></div>
 
 <script>
-let tickets = [];
-let ticketsDisplayMode = 'table';
-let editingId = null;
-let currentStatusFilter = '';
-let lastTicketId = null;
-let notifAtivadas = false;
-
-// ===== LOGIN =====
-const SENHAS = {
-  'Emanoel Estagiário': 'emanoel123',
-  'Ghabriel Estagiário': 'ghabriel123',
-  'HermesonTI': 'ohdude2809'
+// ════════════════════════════════
+//  CREDENCIAIS (simuladas — em produção use backend)
+// ════════════════════════════════
+const CREDENCIAIS = {
+  'Emanoel':    'ti1234',
+  'Ghabriel':   'ti1234',
+  'HermesonTI': 'panzer2809'
 };
 
-function fazerLogin() {
-  const tecnico = document.getElementById('login-tecnico').value;
-  const senha = document.getElementById('login-senha').value;
-  const erro = document.getElementById('login-error');
+let currentUser = null;
+let chamados = [];
+let charts = {};
+let currentPage = 1;
+const PER_PAGE = 10;
+let sortKey = 'id';
+let sortAsc = false;
+let currentView = 'lista';
+let modalChamadoId = null;
+let notifications = [];
 
-  if (!tecnico || !senha) { erro.textContent = '⚠️ Preencha todos os campos.'; erro.classList.add('show'); return; }
-  if (SENHAS[tecnico] !== senha) { erro.textContent = '❌ Usuário ou senha incorretos.'; erro.classList.add('show'); document.getElementById('login-senha').value = ''; return; }
+// ════════════════════════════════
+//  STORAGE — com migração automática de dados antigos
+// ════════════════════════════════
+const DB_KEY    = 'ti_chamados_v2';
+const NOTIF_KEY = 'ti_notifs';
 
-  erro.classList.remove('show');
-  document.getElementById('login-screen').style.display = 'none';
-  sessionStorage.setItem('tecnico-logado', tecnico);
-
-  // Mostra nome do técnico logado na topbar
-  document.getElementById('topbar-page-name').textContent = 'Dashboard — ' + tecnico.split(' ')[0];
-}
-
-function checkLogin() {
-  const logado = sessionStorage.getItem('tecnico-logado');
-  if (logado) {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('topbar-page-name').textContent = 'Dashboard — ' + logado.split(' ')[0];
+// Migra dados de qualquer chave antiga para a chave nova,
+// garantindo que nenhum chamado existente seja perdido.
+function migrateIfNeeded() {
+  if (localStorage.getItem(DB_KEY)) return; // já migrado
+  const oldKeys = ['chamados', 'ti_chamados', 'ti_chamados_v1', 'chamados_ti', 'tickets', 'chamadosTI'];
+  for (const key of oldKeys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const dados = JSON.parse(raw);
+      if (Array.isArray(dados) && dados.length > 0) {
+        localStorage.setItem(DB_KEY, raw);
+        console.log('[TI] ' + dados.length + ' chamado(s) migrado(s) de "' + key + '"');
+        return;
+      }
+    } catch(e) {}
   }
 }
 
-// ===== SIDEBAR MOBILE =====
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open');
+function loadDB() {
+  migrateIfNeeded();
+  const raw = localStorage.getItem(DB_KEY);
+  chamados = raw ? JSON.parse(raw) : [];
+}
+function saveDB() {
+  localStorage.setItem(DB_KEY, JSON.stringify(chamados));
+}
+function loadNotifs() {
+  const raw = localStorage.getItem(NOTIF_KEY + '_' + currentUser);
+  notifications = raw ? JSON.parse(raw) : [];
+}
+function saveNotifs() {
+  localStorage.setItem(NOTIF_KEY + '_' + currentUser, JSON.stringify(notifications));
+}
+
+// ════════════════════════════════
+//  LOGIN
+// ════════════════════════════════
+document.getElementById('loginPass').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function doLogin() {
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  const err  = document.getElementById('loginError');
+
+  if (!user) { err.style.display = 'block'; err.textContent = '⚠️ Selecione seu nome.'; return; }
+  if (CREDENCIAIS[user] !== pass) {
+    err.style.display = 'block'; err.textContent = '❌ Usuário ou senha incorretos.';
+    return;
+  }
+
+  currentUser = user;
+  err.style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  document.getElementById('userName').textContent = user;
+  document.getElementById('userAvatar').textContent = user[0].toUpperCase();
+  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+  loadDB();
+  loadNotifs();
+  updateAll();
+  setupPolling();
+  requestNotifPermission();
+  toast('Bem-vindo, ' + user + '!', 'success');
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+  document.getElementById('loginUser').value = '';
+  if (window._pollInterval) clearInterval(window._pollInterval);
+}
+
+// ════════════════════════════════
+//  POLLING (simula tempo real)
+// ════════════════════════════════
+function setupPolling() {
+  if (window._pollInterval) clearInterval(window._pollInterval);
+  window._pollInterval = setInterval(() => {
+    const prev = chamados.length;
+    loadDB();
+    if (chamados.length > prev) {
+      const novos = chamados.length - prev;
+      addNotif('📋 ' + novos + ' novo(s) chamado(s) recebido(s)!', 'novo');
+      toast('🔔 ' + novos + ' novo chamado recebido!', 'info');
+      updateAll();
+      if (Notification.permission === 'granted') {
+        new Notification('TI Suporte', { body: novos + ' novo(s) chamado(s) recebido(s)!', icon: '💻' });
+      }
+    }
+  }, 5000);
+}
+
+// ════════════════════════════════
+//  NOTIFICATIONS
+// ════════════════════════════════
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function addNotif(msg, type) {
+  notifications.unshift({ msg, type, time: Date.now(), read: false });
+  notifications = notifications.slice(0, 30);
+  saveNotifs();
+  renderNotifs();
+}
+
+function renderNotifs() {
+  const unread = notifications.filter(n => !n.read).length;
+  const dot = document.getElementById('notifDot');
+  const cnt = document.getElementById('notifUnreadCount');
+  dot.classList.toggle('visible', unread > 0);
+  cnt.textContent = unread > 0 ? '(' + unread + ')' : '';
+
+  const list = document.getElementById('notifList');
+  if (!notifications.length) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma notificação</div>';
+    return;
+  }
+  list.innerHTML = notifications.map((n, i) => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead(${i})">
+      <div class="notif-item-title">${n.msg}</div>
+      <div class="notif-item-sub">${timeAgo(n.time)}</div>
+    </div>
+  `).join('');
+}
+
+function markRead(i) {
+  notifications[i].read = true;
+  saveNotifs();
+  renderNotifs();
+}
+
+function toggleNotif() {
+  document.getElementById('notifDropdown').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notifBtn') && !e.target.closest('#notifDropdown')) {
+    document.getElementById('notifDropdown').classList.remove('open');
+  }
+});
+
+function timeAgo(ts) {
+  const d = Math.floor((Date.now() - ts) / 1000);
+  if (d < 60) return 'agora mesmo';
+  if (d < 3600) return Math.floor(d/60) + 'm atrás';
+  if (d < 86400) return Math.floor(d/3600) + 'h atrás';
+  return Math.floor(d/86400) + 'd atrás';
+}
+
+// ════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════
+function goPage(page, btn, statusFilter) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const titles = { dashboard: 'Dashboard', chamados: 'Chamados', equipe: 'Equipe' };
+  document.getElementById('topbarTitle').textContent = titles[page] || page;
+
+  if (page === 'chamados') {
+    if (statusFilter) document.getElementById('filterStatus').value = statusFilter;
+    renderChamados();
+  }
+  if (page === 'equipe') renderEquipe();
+  closeSidebar();
+}
+
+// ════════════════════════════════
+//  SIDEBAR MOBILE
+// ════════════════════════════════
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('mobile-open');
+  document.getElementById('sidebarOverlay').classList.add('open');
 }
 function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
 }
 
-// ===== NOTIFICAÇÕES =====
-async function initNotificacoes() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'granted') {
-    notifAtivadas = true;
-    atualizarBtnNotif();
-  } else if (Notification.permission === 'default') {
-    document.getElementById('notif-banner').style.display = 'flex';
-  }
-}
-
-async function pedirPermissao() {
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    notifAtivadas = true;
-    atualizarBtnNotif();
-    document.getElementById('notif-banner').style.display = 'none';
-    showToast('🔔 Notificações ativadas!', 'green');
-  } else {
-    showToast('❌ Permissão negada para notificações.', 'red');
-  }
-}
-
-function toggleNotificacoes() {
-  if (!('Notification' in window)) { showToast('⚠️ Seu navegador não suporta notificações.'); return; }
-  if (notifAtivadas) {
-    notifAtivadas = false;
-    atualizarBtnNotif();
-    showToast('🔕 Notificações desativadas.');
-  } else {
-    pedirPermissao();
-  }
-}
-
-function atualizarBtnNotif() {
-  const btn = document.getElementById('notif-btn');
-  if (notifAtivadas) {
-    btn.classList.add('on');
-    btn.innerHTML = '🔔 <span>Ativadas</span>';
-  } else {
-    btn.classList.remove('on');
-    btn.innerHTML = '🔔 <span>Notificações</span>';
-  }
-}
-
-function dispararNotificacao(ticket) {
-  if (!notifAtivadas || Notification.permission !== 'granted') return;
-  const n = new Notification('📋 Novo Chamado de TI!', {
-    body: `#${String(ticket.id).padStart(4,'0')} — ${ticket.assunto}\n${ticket.nome} · ${ticket.setor} · Prioridade: ${ticket.prioridade}`,
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%230f62fe"/><text x="16" y="22" text-anchor="middle" font-size="18">💻</text></svg>',
-    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%230f62fe"/></svg>',
-    tag: 'chamado-' + ticket.id,
-    requireInteraction: ticket.prioridade === 'Alta'
-  });
-  n.onclick = () => { window.focus(); openModal(ticket.id); n.close(); };
-}
-
-// ===== API =====
-async function fetchTickets() {
-  const res = await fetch('/api/chamados');
-  const novos = await res.json();
-
-  // Detecta novos chamados para notificar
-  if (lastTicketId !== null) {
-    const chegaram = novos.filter(t => t.id > lastTicketId && t.status === 'Aberto');
-    chegaram.forEach(t => dispararNotificacao(t));
-  }
-
-  tickets = novos;
-  if (tickets.length > 0) lastTicketId = Math.max(...tickets.map(t => t.id));
+// ════════════════════════════════
+//  UPDATE ALL
+// ════════════════════════════════
+function updateAll() {
+  updateStats();
+  updateCharts();
+  renderChamados();
+  renderDashTable();
   updateBadges();
 }
 
+function updateStats() {
+  const total  = chamados.length;
+  const aberto = chamados.filter(c => c.status === 'Aberto').length;
+  const atend  = chamados.filter(c => c.status === 'Em Atendimento').length;
+  const conc   = chamados.filter(c => c.status === 'Concluído').length;
+  const alta   = chamados.filter(c => c.prioridade === 'Alta' && c.status !== 'Concluído').length;
+  const semTec = chamados.filter(c => !c.tecnico && c.status !== 'Concluído').length;
+
+  document.getElementById('statTotal').textContent  = total;
+  document.getElementById('statAberto').textContent = aberto;
+  document.getElementById('statAtend').textContent  = atend;
+  document.getElementById('statConc').textContent   = conc;
+  document.getElementById('statAlta').textContent   = alta;
+  document.getElementById('statSemTec').textContent = semTec;
+}
+
 function updateBadges() {
-  document.getElementById('badge-todos').textContent = tickets.length;
-  document.getElementById('badge-abertos').textContent = tickets.filter(t=>t.status==='Aberto').length;
-  document.getElementById('badge-andamento').textContent = tickets.filter(t=>t.status==='Em Atendimento').length;
+  document.getElementById('badgeTotal').textContent  = chamados.length;
+  document.getElementById('badgeAberto').textContent = chamados.filter(c => c.status === 'Aberto').length;
+  document.getElementById('badgeAtend').textContent  = chamados.filter(c => c.status === 'Em Atendimento').length;
 }
 
-const statusClass = s => s==='Aberto'?'badge-aberto':s==='Em Atendimento'?'badge-atendimento':'badge-concluido';
-const prioClass = p => p==='Alta'?'badge-alta':p==='Média'?'badge-media':'badge-baixa';
-const fmtId = id => '#'+String(id).padStart(4,'0');
+// ════════════════════════════════
+//  CHARTS
+// ════════════════════════════════
+function updateCharts() {
+  const SETORES  = ['Comercial','CRA','Estágio','Pedagógico','Secretaria ADM'];
+  const TECNICOS = ['Emanoel','Ghabriel','HermesonTI','Sem técnico'];
+  const PRIS     = ['Alta','Média','Baixa'];
 
-// ===== VIEWS =====
-async function showView(view, el) {
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('view-dashboard').style.display='none';
-  document.getElementById('view-tickets').style.display='none';
-  currentStatusFilter='';
-  await fetchTickets();
-  closeSidebar();
-  if(view==='dashboard') {
-    document.getElementById('topbar-page-name').textContent='Dashboard';
-    document.getElementById('view-dashboard').style.display='block';
-    renderDashboard();
-  } else {
-    document.getElementById('view-tickets').style.display='block';
-    const labels={todos:'Todos os Chamados',abertos:'Chamados Abertos',andamento:'Em Atendimento',concluidos:'Chamados Concluídos'};
-    const statusMap={abertos:'Aberto',andamento:'Em Atendimento',concluidos:'Concluído',todos:''};
-    document.getElementById('tickets-view-title').textContent=labels[view]||'Chamados';
-    document.getElementById('topbar-page-name').textContent=labels[view]||'Chamados';
-    currentStatusFilter=statusMap[view]||'';
-    document.getElementById('f-status').value=currentStatusFilter;
-    document.getElementById('f-tecnico').value='';
-    renderTicketsView();
+  const setorData  = SETORES.map(s  => chamados.filter(c => c.setor === s).length);
+  const tecData    = TECNICOS.map(t => t === 'Sem técnico'
+    ? chamados.filter(c => !c.tecnico).length
+    : chamados.filter(c => c.tecnico === t).length);
+  const priData    = PRIS.map(p => chamados.filter(c => c.prioridade === p).length);
+
+  buildChart('chartSetor',     'doughnut', SETORES,  setorData,
+    ['#00e5ff','#7c3aed','#22c55e','#f97316','#eab308']);
+  buildChart('chartTecnico',   'bar',      TECNICOS,  tecData,
+    ['#00e5ff','#7c3aed','#22c55e','#64748b']);
+  buildChart('chartPrioridade','doughnut', PRIS,      priData,
+    ['#ef4444','#eab308','#22c55e']);
+}
+
+function buildChart(id, type, labels, data, colors) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderColor: '#111318', borderWidth: 2,
+        borderRadius: type === 'bar' ? 6 : 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: type === 'doughnut', labels: { color: '#64748b', font: { size: 11 } } } },
+      scales: type === 'bar' ? {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e2330' } },
+        y: { ticks: { color: '#64748b', stepSize: 1 }, grid: { color: '#1e2330' } }
+      } : {}
+    }
+  });
+}
+
+// ════════════════════════════════
+//  DASH TABLE
+// ════════════════════════════════
+function renderDashTable() {
+  const tbody = document.getElementById('dashTable');
+  const recent = [...chamados].sort((a,b) => b.id - a.id).slice(0, 8);
+  if (!recent.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📭</div><p>Nenhum chamado ainda</p></div></td></tr>';
+    return;
   }
+  tbody.innerHTML = recent.map(c => `
+    <tr style="cursor:pointer;" onclick="openModal(${c.id})">
+      <td><code style="font-family:var(--mono);font-size:11px;color:var(--accent)">#${String(c.id).padStart(4,'0')}</code></td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.assunto}</td>
+      <td>${c.solicitante}</td>
+      <td>${c.setor}</td>
+      <td>${badgePri(c.prioridade)}</td>
+      <td>${badgeStatus(c.status)}</td>
+      <td>${c.tecnico || '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:var(--muted);font-size:12px;">${fmtDate(c.data)}</td>
+    </tr>
+  `).join('');
 }
 
-async function filterTecnico(name, el) {
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.getElementById('view-dashboard').style.display='none';
-  document.getElementById('view-tickets').style.display='block';
-  document.getElementById('topbar-page-name').textContent=name;
-  document.getElementById('tickets-view-title').textContent=name;
-  currentStatusFilter='';
-  document.getElementById('f-status').value='';
-  document.getElementById('f-tecnico').value=name;
-  await fetchTickets();
-  closeSidebar();
-  renderTicketsView();
-}
-
-function setTicketsView(mode, btn) {
-  ticketsDisplayMode=mode;
-  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('table-view').style.display=mode==='table'?'block':'none';
-  document.getElementById('kanban-view').style.display=mode==='kanban'?'block':'none';
-  renderTicketsView();
-}
-
-function clearFilters() {
-  document.getElementById('search-input').value='';
-  document.getElementById('f-status').value=currentStatusFilter;
-  document.getElementById('f-setor').value='';
-  document.getElementById('f-prio').value='';
-  document.getElementById('f-tecnico').value='';
-  renderTicketsView();
-}
+// ════════════════════════════════
+//  CHAMADOS TABLE + KANBAN
+// ════════════════════════════════
+let _filteredChamados = [];
 
 function getFiltered() {
-  const search=(document.getElementById('search-input').value||'').toLowerCase();
-  const fStatus=document.getElementById('f-status').value;
-  const fSetor=document.getElementById('f-setor').value;
-  const fPrio=document.getElementById('f-prio').value;
-  const fTecnico=document.getElementById('f-tecnico').value;
-  return tickets.filter(t=>{
-    if(fStatus&&t.status!==fStatus) return false;
-    if(fSetor&&t.setor!==fSetor) return false;
-    if(fPrio&&t.prioridade!==fPrio) return false;
-    if(fTecnico==='__sem__'&&t.tecnico) return false;
-    if(fTecnico&&fTecnico!=='__sem__'&&t.tecnico!==fTecnico) return false;
-    if(search&&!t.assunto.toLowerCase().includes(search)&&!t.nome.toLowerCase().includes(search)) return false;
+  const q     = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const fSt   = document.getElementById('filterStatus')?.value || '';
+  const fSet  = document.getElementById('filterSetor')?.value || '';
+  const fPri  = document.getElementById('filterPri')?.value || '';
+  const fTec  = document.getElementById('filterTec')?.value || '';
+
+  return chamados.filter(c => {
+    if (q && !`${c.assunto} ${c.solicitante} ${c.setor} ${c.id}`.toLowerCase().includes(q)) return false;
+    if (fSt  && c.status !== fSt) return false;
+    if (fSet && c.setor  !== fSet) return false;
+    if (fPri && c.prioridade !== fPri) return false;
+    if (fTec === 'sem' && c.tecnico) return false;
+    if (fTec && fTec !== 'sem' && c.tecnico !== fTec) return false;
     return true;
   });
 }
 
-function renderTicketsView() {
-  const filtered=getFiltered();
-  document.getElementById('tickets-view-sub').textContent=filtered.length+' chamado(s) encontrado(s)';
-  if(ticketsDisplayMode==='table') renderTable(filtered);
-  else renderKanban(filtered);
+function renderChamados() {
+  _filteredChamados = getFiltered();
+
+  // sort
+  _filteredChamados.sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return sortAsc ? -1 : 1;
+    if (av > bv) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  if (currentView === 'lista') renderListView();
+  else renderKanbanView();
 }
 
-function renderTable(filtered) {
-  const tbody=document.getElementById('tickets-table-body');
-  if(!filtered.length){tbody.innerHTML=`<tr class="empty-row"><td colspan="9"><div class="empty-icon">📭</div><div>Nenhum chamado encontrado</div></td></tr>`;return;}
-  tbody.innerHTML=filtered.map(t=>`<tr>
-    <td><span class="tid">${fmtId(t.id)}</span></td>
-    <td class="t-assunto">${t.assunto}<small>${t.descricao?t.descricao.substring(0,50)+(t.descricao.length>50?'…':''):'—'}</small></td>
-    <td class="t-nome">${t.nome}</td>
-    <td><span class="t-setor">${t.setor}</span></td>
-    <td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td>
-    <td><span class="badge ${statusClass(t.status)}">${t.status}</span></td>
-    <td><select class="table-select" onchange="quickAtribuir(${t.id},this.value)" style="min-width:130px">
-      <option value="">Sem técnico</option>
-      <option ${t.tecnico==='Emanoel Estagiário'?'selected':''}>Emanoel Estagiário</option>
-      <option ${t.tecnico==='Ghabriel Estagiário'?'selected':''}>Ghabriel Estagiário</option>
-      <option ${t.tecnico==='HermesonTI'?'selected':''}>HermesonTI</option>
-    </select></td>
-    <td style="font-size:0.72rem;color:var(--gray-50);white-space:nowrap">${t.data||'—'}</td>
-    <td><button onclick="openModal(${t.id})" style="background:transparent;border:1px solid var(--gray-20);padding:5px 8px;cursor:pointer;font-size:0.72rem;font-family:inherit;color:var(--blue)">Ver</button></td>
-  </tr>`).join('');
+function renderListView() {
+  const tbody = document.getElementById('chamadosTable');
+  const total = _filteredChamados.length;
+  const start = (currentPage - 1) * PER_PAGE;
+  const page  = _filteredChamados.slice(start, start + PER_PAGE);
+
+  if (!page.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📭</div><p>Nenhum chamado encontrado</p></div></td></tr>';
+  } else {
+    tbody.innerHTML = page.map(c => `
+      <tr onclick="openModal(${c.id})" style="cursor:pointer;">
+        <td><code style="font-size:11px;color:var(--accent);font-family:monospace">#${String(c.id).padStart(4,'0')}</code></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.assunto}</td>
+        <td>${c.solicitante}</td>
+        <td>${c.setor}</td>
+        <td>${badgePri(c.prioridade)}</td>
+        <td>${badgeStatus(c.status)}</td>
+        <td>${c.tecnico || '<span style="color:var(--muted)">—</span>'}</td>
+        <td style="color:var(--muted);font-size:12px;">${fmtDate(c.data)}</td>
+        <td>${slaIndicator(c)}</td>
+        <td><button class="btn-open-chamado" onclick="event.stopPropagation();openModal(${c.id})">Abrir</button></td>
+      </tr>
+    `).join('');
+  }
+
+  // pagination
+  document.getElementById('paginationInfo').textContent =
+    `Mostrando ${Math.min(start+1, total)}–${Math.min(start+PER_PAGE, total)} de ${total}`;
+  const pages = Math.ceil(total / PER_PAGE);
+  const btns  = document.getElementById('paginationBtns');
+  btns.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.className = 'btn-page'; prev.textContent = '‹'; prev.disabled = currentPage === 1;
+  prev.onclick = () => { currentPage--; renderChamados(); };
+  btns.appendChild(prev);
+  for (let i = 1; i <= pages; i++) {
+    const b = document.createElement('button');
+    b.className = 'btn-page' + (i === currentPage ? ' active' : '');
+    b.textContent = i;
+    b.onclick = () => { currentPage = i; renderChamados(); };
+    btns.appendChild(b);
+  }
+  const next = document.createElement('button');
+  next.className = 'btn-page'; next.textContent = '›'; next.disabled = currentPage >= pages;
+  next.onclick = () => { currentPage++; renderChamados(); };
+  btns.appendChild(next);
 }
 
-function renderKanban(filtered) {
-  const cols={'Aberto':[],'Em Atendimento':[],'Concluído':[]};
-  filtered.forEach(t=>{if(cols[t.status])cols[t.status].push(t);});
-  [['aberto','Aberto',''],['atendimento','Em Atendimento','k-orange'],['concluido','Concluído','k-green']].forEach(([key,sk,cls])=>{
-    const cards=cols[sk];
-    document.getElementById('kc-'+key).textContent=cards.length;
-    document.getElementById('kanban-'+key).innerHTML=cards.length
-      ?cards.map(t=>`<div class="kanban-card ${cls}" onclick="openModal(${t.id})"><div class="kc-assunto">${t.assunto}</div><div class="kc-meta"><span>${fmtId(t.id)}</span><span>${t.setor}</span><span class="badge ${prioClass(t.prioridade)}" style="padding:1px 5px;font-size:0.62rem">${t.prioridade}</span>${t.tecnico?`<span>👤 ${t.tecnico.split(' ')[0]}</span>`:'<span style="color:var(--red)">Sem técnico</span>'}</div></div>`).join('')
-      :'<div style="padding:14px;text-align:center;font-size:0.75rem;color:var(--gray-50)">Nenhum chamado</div>';
+function renderKanbanView() {
+  const cols = { 'Aberto': 'kColAberto', 'Em Atendimento': 'kColAtend', 'Concluído': 'kColConc' };
+  const cnts = { 'Aberto': 'kAberto',    'Em Atendimento': 'kAtend',    'Concluído': 'kConc' };
+
+  Object.keys(cols).forEach(status => {
+    const group = _filteredChamados.filter(c => c.status === status);
+    document.getElementById(cnts[status]).textContent = group.length;
+    const el = document.getElementById(cols[status]);
+    if (!group.length) {
+      el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:12px;padding:20px;">Sem chamados</div>';
+      return;
+    }
+    el.innerHTML = group.map(c => `
+      <div class="kanban-card ${(c.prioridade||'').toLowerCase()}" onclick="openModal(${c.id})">
+        <div class="kcard-id">#${String(c.id).padStart(4,'0')}</div>
+        <div class="kcard-title">${c.assunto}</div>
+        <div class="kcard-meta">
+          <span class="kcard-tag">${c.setor}</span>
+          <span class="kcard-tag">${badgePriText(c.prioridade)}</span>
+          ${c.tecnico ? `<span class="kcard-tag">👤 ${c.tecnico}</span>` : ''}
+        </div>
+      </div>
+    `).join('');
   });
 }
 
-async function quickAtribuir(id, tecnico) {
-  const t=tickets.find(x=>x.id===id); if(!t) return;
-  const novoStatus=tecnico&&t.status==='Aberto'?'Em Atendimento':t.status;
-  await fetch(`/api/chamados?id=${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tecnico,status:novoStatus})});
-  await fetchTickets(); renderTicketsView();
-  if(tecnico) showToast('🔧 Atribuído a '+tecnico,'green');
+function setView(view, btn) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('listView').style.display   = view === 'lista'  ? '' : 'none';
+  document.getElementById('kanbanView').style.display = view === 'kanban' ? '' : 'none';
+  renderChamados();
 }
 
-function renderDashboard() {
-  const t=tickets;
-  document.getElementById('ds-total').textContent=t.length;
-  document.getElementById('ds-abertos').textContent=t.filter(x=>x.status==='Aberto').length;
-  document.getElementById('ds-andamento').textContent=t.filter(x=>x.status==='Em Atendimento').length;
-  document.getElementById('ds-concluidos').textContent=t.filter(x=>x.status==='Concluído').length;
-  const setores=['Comercial','CRA','Estágio','Pedagógico','Secretaria ADM'];
-  const sc=setores.map(s=>({name:s,count:t.filter(x=>x.setor===s).length}));
-  const ms=Math.max(...sc.map(x=>x.count),1);
-  document.getElementById('chart-setor').innerHTML=sc.map(s=>`<div class="bar-row"><span class="bar-label">${s.name}</span><div class="bar-track"><div class="bar-fill" style="width:${s.count/ms*100}%"></div></div><span class="bar-count">${s.count}</span></div>`).join('');
-  const tecs=['Emanoel Estagiário','Ghabriel Estagiário','HermesonTI'];
-  const tc=tecs.map((te,i)=>({name:te.split(' ')[0],count:t.filter(x=>x.tecnico===te).length,cls:['orange','green',''][i]}));
-  const mt=Math.max(...tc.map(x=>x.count),1);
-  document.getElementById('chart-tecnico').innerHTML=tc.map(x=>`<div class="bar-row"><span class="bar-label">${x.name}</span><div class="bar-track"><div class="bar-fill ${x.cls}" style="width:${x.count/mt*100}%"></div></div><span class="bar-count">${x.count}</span></div>`).join('');
-  const prios=[{name:'Alta',count:t.filter(x=>x.prioridade==='Alta').length,color:'#da1e28'},{name:'Média',count:t.filter(x=>x.prioridade==='Média').length,color:'#c48000'},{name:'Baixa',count:t.filter(x=>x.prioridade==='Baixa').length,color:'#198038'}];
-  const tot=prios.reduce((a,b)=>a+b.count,0)||1;
-  const r=38,cx=50,cy=50,circ=2*Math.PI*r;let off=0,circles='';
-  prios.forEach(p=>{const d=(p.count/tot)*circ;circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="18" stroke-dasharray="${d} ${circ-d}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;off+=d;});
-  document.getElementById('donut-svg').innerHTML=`<circle cx="50" cy="50" r="38" fill="none" stroke="#e0e0e0" stroke-width="18"/>`+circles;
-  document.getElementById('donut-legend').innerHTML=prios.map(p=>`<div class="legend-item"><span class="legend-dot" style="background:${p.color}"></span><span class="legend-name">${p.name}</span><span class="legend-val">${p.count}</span></div>`).join('');
-  const tbody=document.getElementById('table-dashboard-body');
-  const recent=t.slice(0,10);
-  if(!recent.length){tbody.innerHTML=`<tr class="empty-row"><td colspan="8"><div class="empty-icon">📭</div><div>Nenhum chamado ainda</div></td></tr>`;return;}
-  tbody.innerHTML=recent.map(t=>`<tr style="cursor:pointer" onclick="openModal(${t.id})"><td><span class="tid">${fmtId(t.id)}</span></td><td class="t-assunto">${t.assunto}</td><td class="t-nome">${t.nome}</td><td><span class="t-setor">${t.setor}</span></td><td><span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span></td><td><span class="badge ${statusClass(t.status)}">${t.status}</span></td><td style="font-size:0.78rem">${t.tecnico||'<span style="color:var(--gray-50)">—</span>'}</td><td style="font-size:0.72rem;color:var(--gray-50)">${t.data||'—'}</td></tr>`).join('');
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = true; }
+  renderChamados();
 }
 
+function filterByTecnico(name) {
+  document.getElementById('filterTec').value = name;
+  renderChamados();
+}
+
+// ════════════════════════════════
+//  MODAL
+// ════════════════════════════════
 function openModal(id) {
-  const t=tickets.find(x=>x.id===id); if(!t) return;
-  editingId=id;
-  document.getElementById('modal-id').textContent=fmtId(t.id);
-  document.getElementById('modal-title').textContent=t.assunto;
-  document.getElementById('modal-nome').textContent=t.nome;
-  document.getElementById('modal-setor').textContent=t.setor;
-  document.getElementById('modal-data').textContent=t.data||'—';
-  document.getElementById('modal-prio').innerHTML=`<span class="badge ${prioClass(t.prioridade)}">${t.prioridade}</span>`;
-  document.getElementById('modal-desc').textContent=t.descricao||'Sem descrição fornecida.';
-  document.getElementById('modal-tecnico-sel').value=t.tecnico||'';
-  document.getElementById('modal-status-sel').value=t.status;
-  document.getElementById('modal-overlay').classList.add('open');
+  const c = chamados.find(x => x.id === id);
+  if (!c) return;
+  modalChamadoId = id;
+
+  document.getElementById('modalId').textContent = '#' + String(c.id).padStart(4,'0') + ' — ' + (c.assunto || '—');
+  document.getElementById('modalStatusBadge').innerHTML = badgeStatus(c.status);
+  document.getElementById('mSolicitante').textContent = c.solicitante || '—';
+  document.getElementById('mSetor').textContent = c.setor || '—';
+  document.getElementById('mData').textContent = fmtDate(c.data);
+  document.getElementById('mPrioridade').innerHTML = badgePri(c.prioridade);
+  document.getElementById('mDescricao').textContent = c.descricao || 'Sem descrição.';
+  document.getElementById('mTecnico').value = c.tecnico || '';
+  document.getElementById('mStatus').value = c.status || 'Aberto';
+
+  // histórico
+  const hist = c.historico || [];
+  document.getElementById('mHistorico').innerHTML = hist.length
+    ? hist.map(h => `<div class="history-item"><div class="history-dot"></div><div class="history-text">${h.msg}</div><div class="history-time">${timeAgo(h.time)}</div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px;">Sem histórico.</div>';
+
+  // notas
+  renderNotes(c);
+  document.getElementById('noteInput').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
-function closeModal(){document.getElementById('modal-overlay').classList.remove('open');editingId=null;}
-function closeModalOutside(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+function renderNotes(c) {
+  const notes = c.notas || [];
+  document.getElementById('mNotesList').innerHTML = notes.length
+    ? notes.map(n => `<div class="note-item"><div class="note-meta">👤 ${n.autor} · ${timeAgo(n.time)}</div><div class="note-text">${n.text}</div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:12px;margin-bottom:8px;">Nenhuma nota ainda.</div>';
+}
 
-async function saveModal() {
-  if(!editingId) return;
-  const btn=document.getElementById('btn-save-modal');
-  btn.disabled=true; btn.textContent='⏳ Salvando...';
-  const tecnico=document.getElementById('modal-tecnico-sel').value;
-  const status=document.getElementById('modal-status-sel').value;
-  await fetch(`/api/chamados?id=${editingId}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({tecnico,status})});
-  await fetchTickets();
-  btn.disabled=false; btn.textContent='💾 Salvar Alterações';
+function addNote() {
+  const text = document.getElementById('noteInput').value.trim();
+  if (!text) return;
+  const c = chamados.find(x => x.id === modalChamadoId);
+  if (!c) return;
+  if (!c.notas) c.notas = [];
+  c.notas.push({ autor: currentUser, text, time: Date.now() });
+  saveDB();
+  renderNotes(c);
+  document.getElementById('noteInput').value = '';
+  toast('Nota adicionada!', 'success');
+}
+
+function saveChamado() {
+  const c = chamados.find(x => x.id === modalChamadoId);
+  if (!c) return;
+  const novoStatus = document.getElementById('mStatus').value;
+  const novoTec    = document.getElementById('mTecnico').value;
+
+  if (!c.historico) c.historico = [];
+  if (c.status !== novoStatus)
+    c.historico.push({ msg: `Status alterado de "${c.status}" para "${novoStatus}" por ${currentUser}`, time: Date.now() });
+  if (c.tecnico !== novoTec)
+    c.historico.push({ msg: `Técnico alterado para "${novoTec || 'Sem técnico'}" por ${currentUser}`, time: Date.now() });
+
+  c.status  = novoStatus;
+  c.tecnico = novoTec;
+  saveDB();
+  updateAll();
   closeModal();
-  showToast('✅ Chamado atualizado!','green');
-  if(document.getElementById('view-dashboard').style.display!=='none') renderDashboard();
-  else renderTicketsView();
+  toast('Chamado atualizado com sucesso!', 'success');
 }
 
-function showToast(msg,type){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast show'+(type?' '+type:'');
-  setTimeout(()=>t.classList.remove('show'),3000);
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  modalChamadoId = null;
+}
+function closeModalIfBg(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
-// ===== INIT =====
-checkLogin();
-(async()=>{
-  await fetchTickets();
-  renderDashboard();
-  initNotificacoes();
-})();
+// ════════════════════════════════
+//  EQUIPE
+// ════════════════════════════════
+function renderEquipe() {
+  const tecnicos = [
+    { name: 'Emanoel', role: 'Estagiário TI' },
+    { name: 'Ghabriel', role: 'Estagiário TI' },
+    { name: 'HermesonTI', role: 'Técnico Senior' }
+  ];
+  document.getElementById('teamGrid').innerHTML = tecnicos.map(t => {
+    const meus   = chamados.filter(c => c.tecnico === t.name);
+    const aberto = meus.filter(c => c.status === 'Aberto').length;
+    const conc   = meus.filter(c => c.status === 'Concluído').length;
+    return `
+      <div class="team-card">
+        <div class="team-avatar">${t.name[0]}</div>
+        <div class="team-name">${t.name}</div>
+        <div class="team-role">${t.role}</div>
+        <div class="team-stats">
+          <div class="team-stat"><div class="team-stat-val">${meus.length}</div><div class="team-stat-lbl">Total</div></div>
+          <div class="team-stat"><div class="team-stat-val" style="color:var(--green)">${conc}</div><div class="team-stat-lbl">Concluídos</div></div>
+          <div class="team-stat"><div class="team-stat-val" style="color:var(--accent)">${aberto}</div><div class="team-stat-lbl">Abertos</div></div>
+          <div class="team-stat"><div class="team-stat-val" style="color:var(--orange)">${meus.filter(c=>c.status==='Em Atendimento').length}</div><div class="team-stat-lbl">Atendimento</div></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
-// Auto-refresh a cada 15s
-setInterval(async()=>{
-  await fetchTickets();
-  if(document.getElementById('view-dashboard').style.display!=='none') renderDashboard();
-  else renderTicketsView();
-}, 15000);
+// ════════════════════════════════
+//  EXPORT CSV
+// ════════════════════════════════
+function exportCSV() {
+  const rows = [['ID','Assunto','Solicitante','Setor','Prioridade','Status','Técnico','Data']];
+  _filteredChamados.forEach(c => {
+    rows.push([c.id, c.assunto, c.solicitante, c.setor, c.prioridade, c.status, c.tecnico||'', fmtDate(c.data)]);
+  });
+  const csv  = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'chamados_' + Date.now() + '.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado!', 'success');
+}
+
+// ════════════════════════════════
+//  TOAST
+// ════════════════════════════════
+function toast(msg, type = 'info') {
+  const icons = { success: '✅', error: '❌', info: '💡' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ════════════════════════════════
+//  HELPERS
+// ════════════════════════════════
+function badgeStatus(s) {
+  const map = { 'Aberto': 'aberto', 'Em Atendimento': 'atendimento', 'Concluído': 'concluido' };
+  return `<span class="badge-status ${map[s]||''}">${s}</span>`;
+}
+function badgePri(p) {
+  const map = { 'Alta': 'alta', 'Média': 'media', 'Baixa': 'baixa' };
+  return `<span class="badge-pri ${map[p]||''}">${p}</span>`;
+}
+function badgePriText(p) {
+  const icons = { Alta: '🔴', Média: '🟡', Baixa: '🟢' };
+  return (icons[p] || '') + ' ' + (p || '—');
+}
+
+function slaIndicator(c) {
+  if (c.status === 'Concluído') return '<span class="sla-ok">✓ OK</span>';
+  const hrs = (Date.now() - new Date(c.data).getTime()) / 36e5;
+  const limit = c.prioridade === 'Alta' ? 4 : c.prioridade === 'Média' ? 24 : 72;
+  if (hrs > limit) return `<span class="sla-late">⚠ ${Math.floor(hrs)}h</span>`;
+  if (hrs > limit * .7) return `<span class="sla-warn">⏱ ${Math.floor(hrs)}h</span>`;
+  return `<span class="sla-ok">⏱ ${Math.floor(hrs)}h</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
 </script>
 </body>
 </html>
