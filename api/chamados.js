@@ -1,27 +1,26 @@
-import { neon } from '@neondatabase/serverless';
+const { neon } = require('@neondatabase/serverless');
 
 const sql = neon(process.env.DATABASE_URL);
 
-// Garante que a tabela existe
 async function initDB() {
   await sql`
     CREATE TABLE IF NOT EXISTS chamados (
-      id        SERIAL PRIMARY KEY,
-      assunto   TEXT NOT NULL,
+      id          SERIAL PRIMARY KEY,
+      assunto     TEXT NOT NULL,
       solicitante TEXT NOT NULL,
-      setor     TEXT NOT NULL,
-      prioridade TEXT NOT NULL DEFAULT 'Média',
-      descricao TEXT DEFAULT '',
-      status    TEXT NOT NULL DEFAULT 'Aberto',
-      tecnico   TEXT DEFAULT '',
-      historico JSONB DEFAULT '[]',
-      notas     JSONB DEFAULT '[]',
-      data      TIMESTAMPTZ DEFAULT NOW()
+      setor       TEXT NOT NULL,
+      prioridade  TEXT NOT NULL DEFAULT 'Média',
+      descricao   TEXT DEFAULT '',
+      status      TEXT NOT NULL DEFAULT 'Aberto',
+      tecnico     TEXT DEFAULT '',
+      historico   JSONB DEFAULT '[]',
+      notas       JSONB DEFAULT '[]',
+      data        TIMESTAMPTZ DEFAULT NOW()
     )
   `;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,13 +30,11 @@ export default async function handler(req, res) {
   await initDB();
 
   try {
-    // GET — listar todos
     if (req.method === 'GET') {
       const rows = await sql`SELECT * FROM chamados ORDER BY id DESC`;
       return res.status(200).json(rows);
     }
 
-    // POST — criar novo chamado
     if (req.method === 'POST') {
       const { assunto, solicitante, setor, prioridade, descricao } = req.body;
       if (!assunto || !solicitante || !setor) {
@@ -52,7 +49,6 @@ export default async function handler(req, res) {
       return res.status(201).json(rows[0]);
     }
 
-    // PUT — atualizar chamado (status, tecnico, notas, historico)
     if (req.method === 'PUT') {
       const { id, status, tecnico, historico, notas } = req.body;
       if (!id) return res.status(400).json({ error: 'ID obrigatório' });
@@ -75,4 +71,4 @@ export default async function handler(req, res) {
     console.error(err);
     return res.status(500).json({ error: 'Erro interno', detail: err.message });
   }
-}
+};
