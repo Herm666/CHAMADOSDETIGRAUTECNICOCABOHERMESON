@@ -524,32 +524,7 @@ footer {
 </footer>
 
 <script>
-const DB_KEY     = 'ti_chamados_v2';
-const DB_OLD_KEYS = ['chamados', 'ti_chamados', 'ti_chamados_v1', 'chamados_ti', 'tickets', 'chamadosTI'];
-
-function migrateIfNeeded() {
-  if (localStorage.getItem(DB_KEY)) return;
-  for (const key of DB_OLD_KEYS) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      const dados = JSON.parse(raw);
-      if (Array.isArray(dados) && dados.length > 0) {
-        localStorage.setItem(DB_KEY, raw);
-        return;
-      }
-    } catch(e) {}
-  }
-}
-
-function loadDB() {
-  migrateIfNeeded();
-  const raw = localStorage.getItem(DB_KEY);
-  return raw ? JSON.parse(raw) : [];
-}
-function saveDB(data) {
-  localStorage.setItem(DB_KEY, JSON.stringify(data));
-}
+const API = '/api/chamados';
 
 function updateCharCount() {
   const v = document.getElementById('fDescricao').value.length;
@@ -572,7 +547,7 @@ function validate() {
   return ok;
 }
 
-function enviarChamado() {
+async function enviarChamado() {
   if (!validate()) return;
 
   if (!document.getElementById('termos').checked) {
@@ -584,37 +559,31 @@ function enviarChamado() {
   btn.classList.add('loading');
   btn.disabled = true;
 
-  setTimeout(() => {
-    const chamados = loadDB();
-    const id = chamados.length > 0 ? Math.max(...chamados.map(c => c.id)) + 1 : 1;
-
-    const prioridade = document.querySelector('input[name="prioridade"]:checked')?.value || 'Média';
-
-    const chamado = {
-      id,
-      assunto: document.getElementById('fTitulo').value.trim(),
-      solicitante: document.getElementById('fNome').value.trim(),
-      setor: document.getElementById('fSetor').value,
-      prioridade,
-      descricao: document.getElementById('fDescricao').value.trim(),
-      status: 'Aberto',
-      tecnico: '',
-      data: new Date().toISOString(),
-      historico: [{ msg: 'Chamado aberto via portal', time: Date.now() }],
-      notas: []
-    };
-
-    chamados.push(chamado);
-    saveDB(chamados);
-
+  const prioridade = document.querySelector('input[name="prioridade"]:checked')?.value || 'Média';
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assunto: document.getElementById('fTitulo').value.trim(),
+        solicitante: document.getElementById('fNome').value.trim(),
+        setor: document.getElementById('fSetor').value,
+        prioridade,
+        descricao: document.getElementById('fDescricao').value.trim()
+      })
+    });
+    if (!res.ok) throw new Error('Erro ao enviar');
+    const chamado = await res.json();
     btn.classList.remove('loading');
     btn.disabled = false;
-
-    // show success
     document.querySelectorAll('.form-block').forEach(b => b.style.display = 'none');
-    document.getElementById('protocolNum').textContent = '#' + String(id).padStart(4, '0');
+    document.getElementById('protocolNum').textContent = '#' + String(chamado.id).padStart(4, '0');
     document.getElementById('successCard').classList.add('show');
-  }, 1000);
+  } catch(e) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    alert('Erro ao enviar chamado. Tente novamente.');
+  }
 }
 
 function novoChamado() {

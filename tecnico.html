@@ -1151,37 +1151,24 @@ let modalChamadoId = null;
 let notifications = [];
 
 // ════════════════════════════════
-//  STORAGE — com migração automática de dados antigos
+//  API — Neon (PostgreSQL via Vercel Functions)
 // ════════════════════════════════
-const DB_KEY    = 'ti_chamados_v2';
+const API = '/api/chamados';
 const NOTIF_KEY = 'ti_notifs';
 
-// Migra dados de qualquer chave antiga para a chave nova,
-// garantindo que nenhum chamado existente seja perdido.
-function migrateIfNeeded() {
-  if (localStorage.getItem(DB_KEY)) return; // já migrado
-  const oldKeys = ['chamados', 'ti_chamados', 'ti_chamados_v1', 'chamados_ti', 'tickets', 'chamadosTI'];
-  for (const key of oldKeys) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      const dados = JSON.parse(raw);
-      if (Array.isArray(dados) && dados.length > 0) {
-        localStorage.setItem(DB_KEY, raw);
-        console.log('[TI] ' + dados.length + ' chamado(s) migrado(s) de "' + key + '"');
-        return;
-      }
-    } catch(e) {}
+async function loadDB() {
+  try {
+    const res = await fetch(API);
+    chamados = await res.json();
+    if (!Array.isArray(chamados)) chamados = [];
+  } catch(e) {
+    console.error('Erro ao carregar chamados:', e);
+    chamados = [];
   }
 }
 
-function loadDB() {
-  migrateIfNeeded();
-  const raw = localStorage.getItem(DB_KEY);
-  chamados = raw ? JSON.parse(raw) : [];
-}
-function saveDB() {
-  localStorage.setItem(DB_KEY, JSON.stringify(chamados));
+async function saveDB() {
+  // saveDB agora é no-op — cada operação usa a API diretamente
 }
 function loadNotifs() {
   const raw = localStorage.getItem(NOTIF_KEY + '_' + currentUser);
@@ -1198,7 +1185,7 @@ document.getElementById('loginPass').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
-function doLogin() {
+async function doLogin() {
   const user = document.getElementById('loginUser').value;
   const pass = document.getElementById('loginPass').value;
   const err  = document.getElementById('loginError');
@@ -1218,7 +1205,7 @@ function doLogin() {
   document.getElementById('userAvatar').textContent = user[0].toUpperCase();
   document.getElementById('dashDate').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 
-  loadDB();
+  await loadDB();
   loadNotifs();
   updateAll();
   setupPolling();
@@ -1242,7 +1229,7 @@ function setupPolling() {
   if (window._pollInterval) clearInterval(window._pollInterval);
   window._pollInterval = setInterval(() => {
     const prev = chamados.length;
-    loadDB();
+    await loadDB();
     if (chamados.length > prev) {
       const novos = chamados.length - prev;
       addNotif('📋 ' + novos + ' novo(s) chamado(s) recebido(s)!', 'novo');
@@ -1618,20 +1605,28 @@ function renderNotes(c) {
     : '<div style="color:var(--muted);font-size:12px;margin-bottom:8px;">Nenhuma nota ainda.</div>';
 }
 
-function addNote() {
+async function addNote() {
   const text = document.getElementById('noteInput').value.trim();
   if (!text) return;
   const c = chamados.find(x => x.id === modalChamadoId);
   if (!c) return;
   if (!c.notas) c.notas = [];
   c.notas.push({ autor: currentUser, text, time: Date.now() });
-  saveDB();
-  renderNotes(c);
-  document.getElementById('noteInput').value = '';
-  toast('Nota adicionada!', 'success');
+  try {
+    await fetch(API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, notas: c.notas })
+    });
+    renderNotes(c);
+    document.getElementById('noteInput').value = '';
+    toast('Nota adicionada!', 'success');
+  } catch(e) {
+    toast('Erro ao salvar nota!', 'error');
+  }
 }
 
-function saveChamado() {
+async function saveChamado() {
   const c = chamados.find(x => x.id === modalChamadoId);
   if (!c) return;
   const novoStatus = document.getElementById('mStatus').value;
@@ -1643,12 +1638,20 @@ function saveChamado() {
   if (c.tecnico !== novoTec)
     c.historico.push({ msg: `Técnico alterado para "${novoTec || 'Sem técnico'}" por ${currentUser}`, time: Date.now() });
 
-  c.status  = novoStatus;
-  c.tecnico = novoTec;
-  saveDB();
-  updateAll();
-  closeModal();
-  toast('Chamado atualizado com sucesso!', 'success');
+  try {
+    const res = await fetch(API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: c.id, status: novoStatus, tecnico: novoTec, historico: c.historico, notas: c.notas })
+    });
+    if (!res.ok) throw new Error('Falha ao salvar');
+    await loadDB();
+    updateAll();
+    closeModal();
+    toast('Chamado atualizado com sucesso!', 'success');
+  } catch(e) {
+    toast('Erro ao salvar chamado!', 'error');
+  }
 }
 
 function closeModal() {
