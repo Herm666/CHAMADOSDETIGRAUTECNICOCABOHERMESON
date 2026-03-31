@@ -1227,7 +1227,7 @@ function doLogout() {
 // ════════════════════════════════
 function setupPolling() {
   if (window._pollInterval) clearInterval(window._pollInterval);
-  window._pollInterval = setInterval(() => {
+  window._pollInterval = setInterval(async () => {
     const prev = chamados.length;
     await loadDB();
     if (chamados.length > prev) {
@@ -1336,7 +1336,7 @@ function closeSidebar() {
 // ════════════════════════════════
 //  UPDATE ALL
 // ════════════════════════════════
-function updateAll() {
+async function updateAll() {
   updateStats();
   updateCharts();
   renderChamados();
